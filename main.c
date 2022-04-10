@@ -8,7 +8,7 @@
 #include <pthread.h>
 #include "uv.h"
 
-#define ThreadsNum 10
+#define ThreadsNum 1
 
 int open_cliendfd (char *host, int port){
   int fd;
@@ -106,7 +106,7 @@ int check_ok(char* str)
 void* thread_null(void* args_t)
 {
   char login[50];
-  snprintf(login, 50, "A2 LOGIN \"test%d\" \"ping55555\"\n", (int)args_t+1);
+  snprintf(login, 50, "A2 LOGIN \"kt.testimap2022@gmail.com\" \"Q!w2e3r4t5\"\n", (int)args_t+1);
   
   int fd = open_cliendfd("imap.gmail.com", 993);
   if (fd < 0) {
@@ -122,7 +122,7 @@ void* thread_null(void* args_t)
   printf("len=%lu\n", strlen(result));
   
   char *buffers[6] = {
-    "A1 CAPABILITY\n",
+    "A1 login kt.testimap2022@gmail.com Q!w2e3r4t5\n",
     login,
     "A3 CAPABILITY\n",
     "A4 ID (\"name\" \"inbox\" \"version\" \"1.0.0\" \"support-url\" \"http://yorkiefixer.me\")\n",
@@ -134,6 +134,7 @@ void* thread_null(void* args_t)
   int i = 0;
   do {
     printf("S: %s\n", result);
+    sleep(1);
     if (i == 0) {
       printf("C: %s\n", buffers[i]);
       send(fd, buffers[i], strlen(buffers[i]), 0);
