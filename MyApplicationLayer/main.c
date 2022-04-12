@@ -13,6 +13,23 @@
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+//login
+//check response
+//create mailbox
+//deletemailbox
+//rename mailbox
+//noop?
+//get count
+//delete mail
+//search
+//get unseen emails
+//get top emails
+//move mail
+//get mailboxes
+//select
+//get all mails
+//get mail
+//get mails
 
 int initializeClient(char host[],char port[]){
   int socketId;
@@ -181,6 +198,58 @@ void DestroySSL(){
     EVP_cleanup();
 }
 
+void SendAndReceiveImapMessage(char *command, SSL* sslConnection){
+   printf("C: %s\n", command);
+   SSL_write(sslConnection, command, strlen(command));
+   char *result = imap_recv(sslConnection, 100);
+   printf("S: %s\n", result);
+}
+
+void ShowImapCommands(SSL* sslConnection){
+  int count = -1;
+  int runProgram=1;
+  int cursor = 1;
+  while(runProgram){
+    char message[100];
+    snprintf(message, sizeof(message), "A%d ", cursor);
+    printf("select what to do:\n"
+           "1. check connection status \n"
+           "2. login \n"
+           "3. check inbox \n"
+           "4. fetch message \n"
+           "5. delete message \n"
+           "6. close system \n");
+    scanf("%d",&count);
+    switch(count){
+      case 1:
+        strcat(message, "CAPABILITY\r\n");
+        SendAndReceiveImapMessage(message,sslConnection);
+        break;
+      case 2:
+        strcat(message,"LOGIN \"kt.testimap2022@gmail.com\" \"Q!w2e3r4t5\"\r\n");
+        SendAndReceiveImapMessage(message,sslConnection);
+        break;
+      case 3:
+        strcat(message,"SELECT \"INBOX\"\r\n");
+        SendAndReceiveImapMessage(message,sslConnection);
+        break;
+      case 4:
+        SendAndReceiveImapMessage(message,sslConnection);
+        break;
+      case 5:
+        SendAndReceiveImapMessage(message,sslConnection);
+        break;
+      case 6:
+        runProgram=0;
+        break;
+      default:
+        runProgram=0;
+        break;
+    }
+    cursor++;
+  }
+}
+
 int main(){
   int fd = initializeClient("imap.gmail.com","993");
   if (fd < 0) {
@@ -206,28 +275,29 @@ int main(){
     //"A7 LOGOUT\r\n"
   };
 
-  int i = 0;
-  do {
-    printf("S: %s\n", result);
-    if (i == 0) {
-      printf("C: %s\n", buffers[i]);
-      SSL_write(sslConnection, buffers[i], strlen(buffers[i]));
-      i++;
-      continue;
-    }
+  ShowImapCommands(sslConnection);
+  /* int i = 0; */
+  /* do { */
+  /*   printf("S: %s\n", result); */
+  /*   if (i == 0) { */
+  /*     printf("C: %s\n", buffers[i]); */
+  /*     SSL_write(sslConnection, buffers[i], strlen(buffers[i])); */
+  /*     i++; */
+  /*     continue; */
+  /*   } */
 
-    if (check_ok(result)) {
-      if (i >= 5) {
-        break;
-      }
-      else {
-        printf("C: %s\n", buffers[i]);
-        SSL_write(sslConnection, buffers[i], strlen(buffers[i]));
-        i++;
-      }
-    }
-  }
-  while ((result = imap_recv(sslConnection, 100)) || 1);
+  /*   if (check_ok(result)) { */
+  /*     if (i >= 5) { */
+  /*       break; */
+  /*     } */
+  /*     else { */
+  /*       printf("C: %s\n", buffers[i]); */
+  /*       SSL_write(sslConnection, buffers[i], strlen(buffers[i])); */
+  /*       i++; */
+  /*     } */
+  /*   } */
+  /* } */
+  /* while ((result = imap_recv(sslConnection, 100)) || 1); */
 
   SSL_free(sslConnection);
   DestroySSL();
