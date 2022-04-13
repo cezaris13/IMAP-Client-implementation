@@ -13,23 +13,6 @@
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-//login
-//check response
-//create mailbox
-//deletemailbox
-//rename mailbox
-//noop?
-//get count
-//delete mail
-//search
-//get unseen emails
-//get top emails
-//move mail
-//get mailboxes
-//select
-//get all mails
-//get mail
-//get mails
 
 int initializeClient(char host[],char port[]){
   int socketId;
@@ -123,7 +106,7 @@ int initializeClient(char host[],char port[]){
 
 /*   return result; */
 /* } */
-char *imap_recv(SSL *sslConnection, size_t size) {
+char *imap_recv(SSL *sslConnection, size_t size) {// there are some problems with this, memory issues, fix
   size_t cursor = 0;
   int rc;
 
@@ -211,42 +194,108 @@ void ShowImapCommands(SSL* sslConnection){
   int cursor = 1;
   while(runProgram){
     char message[100];
-    snprintf(message, sizeof(message), "A%d ", cursor);
+//should i process responses properly?
+//
+//noop?
+//get count
+//search
+//select
+
+//login +
+//check response +
+//create mailbox
+//deletemailbox
+//rename mailbox
+//get mailboxes
+//get unseen emails
+//get top emails
+//get mail
+//move mail
+//get all mails
+//get mails
+//delete mail
+    snprintf(message, sizeof(message), "A%d ", cursor++);
     printf("select what to do:\n"
            "1. check connection status \n"
            "2. login \n"
            "3. check inbox \n"
-           "4. fetch message \n"
-           "5. delete message \n"
-           "6. close system \n");
+           "4. get mail \n"
+           "5. delete mail \n"
+           "6. get mails \n"
+           "7. get unseen mails \n"
+           "8. get top mails \n"
+           "9. get all mails \n"
+           "10. move mail \n"
+           "11. delete mail \n"
+           "12. get mailboxes \n"
+           "13. create mailbox \n"
+           "14. rename mailbox \n"
+           "15. delete mailbox \n"
+           "16. logout \n"
+           "17. close system \n");
     scanf("%d",&count);
+    char mailbox[10];
     switch(count){
       case 1:
         strcat(message, "CAPABILITY\r\n");
-        SendAndReceiveImapMessage(message,sslConnection);
         break;
       case 2:
         strcat(message,"LOGIN \"kt.testimap2022@gmail.com\" \"Q!w2e3r4t5\"\r\n");
-        SendAndReceiveImapMessage(message,sslConnection);
         break;
       case 3:
-        strcat(message,"SELECT \"INBOX\"\r\n");
-        SendAndReceiveImapMessage(message,sslConnection);
+        printf("enter mailbox\n");
+        scanf("%s",mailbox);
+        strcat(strcat(strcat(message,"SELECT \""),mailbox),"\"\r\n");
         break;
       case 4:
-        SendAndReceiveImapMessage(message,sslConnection);
         break;
       case 5:
-        SendAndReceiveImapMessage(message,sslConnection);
         break;
       case 6:
+        break;
+      case 7:
+        printf("enter mailbox\n");
+        scanf("%s",mailbox);
+        strcat(strcat(strcat(message,"SELECT \""),mailbox),"\"\r\n");
+        SendAndReceiveImapMessage(message,sslConnection);
+        snprintf(message, sizeof(message), "A%d ", cursor++);
+        strcat(message,"uid search unseen\r\n");
         runProgram=0;
+        break;
+      case 8:
+        runProgram=0;
+        break;
+      case 9:
+        runProgram=0;
+        break;
+      case 10:
+        runProgram=0;
+        break;
+      case 11:
+        runProgram=0;
+        break;
+      case 12:
+        strcat(message,"LIST \"\" *\r\n");// see how to format this
+        break;
+      case 13:
+        runProgram=0;
+        break;
+      case 14:
+        runProgram=0;
+        break;
+      case 15:
+        runProgram=0;
+        break;
+      case 16:
+        strcat(message,"LOGOUT\r\n");
         break;
       default:
         runProgram=0;
         break;
     }
-    cursor++;
+    if(runProgram){
+        SendAndReceiveImapMessage(message,sslConnection);
+    }
   }
 }
 
@@ -261,19 +310,20 @@ int main(){
   }
   SSL *sslConnection = ConnectSSL(fd);
   char *result=imap_recv(sslConnection, 100);
+  printf("S: %s\n",result);
 
   char login[52];
   snprintf(login, 52, "A2 LOGIN \"kt.testimap2022@gmail.com\" \"Q!w2e3r4t5\"\r\n");
 
-  char *buffers[6] = {
-    "A1 CAPABILITY\r\n",
-    login,
-    "A3 CAPABILITY\r\n",
-    "A4 ID (\"name\" \"inbox\" \"version\" \"1.0.0\" \"support-url\" \"http://yorkiefixer.me\")\r\n",
-    "A5 SELECT \"INBOX\"\r\n",
-    //"A6 FETCH *:* (UID ENVELOPE)\r\n"
-    //"A7 LOGOUT\r\n"
-  };
+  /* char *buffers[6] = { */
+  /*   "A1 CAPABILITY\r\n", */
+  /*   login, */
+  /*   "A3 CAPABILITY\r\n", */
+  /*   "A4 ID (\"name\" \"inbox\" \"version\" \"1.0.0\" \"support-url\" \"http://yorkiefixer.me\")\r\n", */
+  /*   "A5 SELECT \"INBOX\"\r\n", */
+  /*   //"A6 FETCH *:* (UID ENVELOPE)\r\n" */
+  /*   //"A7 LOGOUT\r\n" */
+  /* }; */
 
   ShowImapCommands(sslConnection);
   /* int i = 0; */
