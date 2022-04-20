@@ -106,7 +106,8 @@ int initializeClient(char host[],char port[]){
 
 /*   return result; */
 /* } */
-char *imap_recv(SSL *sslConnection, size_t size) {// there are some problems with this, memory issues, fix
+
+char *imap_recv(SSL *sslConnection, size_t size) {
   size_t cursor = 0;
   int rc;
 
@@ -116,13 +117,11 @@ char *imap_recv(SSL *sslConnection, size_t size) {// there are some problems wit
     if (rc == -1)
       continue;
 
-    printf("%d\n",rc);
     buffer[rc] = '\0';
-    printf("buffer: %s\n",buffer);
-    int len = (int)(sizeof(char)*(cursor++)*(size)) + rc;
+    int len = (sizeof(char)*(cursor++)*(size)) + rc;
     char *temp_str = buffer;
     char *temp_res = malloc(len);
-    printf("help\n");
+
     memcpy(temp_res, result, len);
 
     if (result != NULL) {
@@ -186,6 +185,7 @@ void SendAndReceiveImapMessage(char *command, SSL* sslConnection){
    SSL_write(sslConnection, command, strlen(command));
    char *result = imap_recv(sslConnection, 100);
    printf("S: %s\n", result);
+   free(result);
 }
 
 void ShowImapCommands(SSL* sslConnection){
@@ -234,7 +234,7 @@ void ShowImapCommands(SSL* sslConnection){
            "16. logout \n"
            "17. close system \n");
     scanf("%d",&count);
-    char mailbox[10];
+    char mailbox[100];
     switch(count){
       case 1:
         strcat(message, "CAPABILITY\r\n");
@@ -248,6 +248,7 @@ void ShowImapCommands(SSL* sslConnection){
         strcat(strcat(strcat(message,"SELECT \""),mailbox),"\"\r\n");
         break;
       case 4:
+      //take inbox name and get mail
         break;
       case 5:
         break;
@@ -311,19 +312,12 @@ int main(){
   SSL *sslConnection = ConnectSSL(fd);
   char *result=imap_recv(sslConnection, 100);
   printf("S: %s\n",result);
-
-  char login[52];
-  snprintf(login, 52, "A2 LOGIN \"kt.testimap2022@gmail.com\" \"Q!w2e3r4t5\"\r\n");
+  free(result);
 
   /* char *buffers[6] = { */
-  /*   "A1 CAPABILITY\r\n", */
-  /*   login, */
-  /*   "A3 CAPABILITY\r\n", */
   /*   "A4 ID (\"name\" \"inbox\" \"version\" \"1.0.0\" \"support-url\" \"http://yorkiefixer.me\")\r\n", */
   /*   "A5 SELECT \"INBOX\"\r\n", */
   /*   //"A6 FETCH *:* (UID ENVELOPE)\r\n" */
-  /*   //"A7 LOGOUT\r\n" */
-  /* }; */
 
   ShowImapCommands(sslConnection);
   /* int i = 0; */
