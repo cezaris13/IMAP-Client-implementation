@@ -129,9 +129,9 @@ int SendAndReceiveImapMessage(char *command, SSL* sslConnection){
   printf("C: %s\n", command);
   SSL_write(sslConnection, command, strlen(command));
   char *response = imap_recv(sslConnection, 100);
-    int is_ok = check_ok(response);
-    printf("S: %s\n", response);
-    free(response);
+  int is_ok = check_ok(response);
+  printf("S: %s\n", response);
+  free(response);
   if (is_ok) 
     return 0;
   else
@@ -168,27 +168,6 @@ void LoginUserHardcoded(SSL *sslConnection){
     printf("Login failed\n");
 }
 
-// void CheckInboxByUID(SSL *sslConnection){
-//   char message[100];
-//   snprintf(message, sizeof(message), "A%d SELECT INBOX\r\n", cursor++);
-//   if(SendAndReceiveImapMessage(message,sslConnection) == -1)
-//     printf("Select failed\n");
-//   snprintf(message, sizeof(message), "A%d UID SEARCH ALL\r\n", cursor++);
-//   if(SendAndReceiveImapMessage(message,sslConnection) == -1)
-//     printf("Search failed\n");
-// }
-
-// int UserIsLoggedIn(SSL *sslConnection){
-//   char message[100];
-//   snprintf(message, sizeof(message), "A%d CAPABILITY\r\n", cursor++);
-//   if(SendAndReceiveImapMessage(message,sslConnection) == -1)
-//     return 0;
-//   char *response = imap_recv(sslConnection, 100);
-//   int is_ok = check_ok(response);
-//   free(response);
-//   return is_ok;
-// }
-
 void LogoutUser(SSL *sslConnection){
   char message[100];
   snprintf(message, sizeof(message), "A%d LOGOUT\r\n", cursor++);
@@ -196,41 +175,21 @@ void LogoutUser(SSL *sslConnection){
     printf("Logout failed\n");
 }
 
-// void SendEmail(SSL *sslConnection){
-//   char *recipient, *subject, *message;
-//   recipient = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
-//   subject = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
-//   message = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
-//   printf("Enter recipient: ");
-//   scanf("%s", recipient);
-//   printf("Enter subject: ");
-//   scanf("%s", subject);
-//   printf("Enter message: ");
-//   scanf("%s", message);
-//   char message_to_send[MAX_EMAIL_ADDRESS_LENGTH*2+100];
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d MAIL FROM: <%s>\r\n", cursor++, "
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d RCPT TO: <%s>\r\n", cursor++, recipient);
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d DATA\r\n", cursor++);
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d FROM: <%s>\r\n", cursor++, "
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d SUBJECT: %s\r\n", cursor++, subject);
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d %s\r\n", cursor++, message);
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d .\r\n", cursor++);
-//   if(SendAndReceiveImapMessage(message_to_send,sslConnection) == -1)
-//     printf("Send failed\n");
-//   free(recipient);
-//   free(subject);
-//   free(message);
-// }
+void SelectMailboxByNameProvided(SSL *sslConnection, char* mailBoxName){
+  char message[100];
+  snprintf(message, sizeof(message), "A%d SELECT \"%s\"\r\n", cursor++, mailBoxName);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Select failed\n");
+}
 
 void SelectMailboxByName(SSL *sslConnection){
-  //check if logged in  
   char message[100];
   char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE*sizeof(char));
   printf("Enter mailbox name: ");
   scanf("%s", mailBoxName);
-  snprintf(message, sizeof(message), "A%d SELECT \"%s\"\r\n", cursor++, mailBoxName);
-  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
-    printf("Select failed\n");
+  if(strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE)
+    printf("Mailbox name is too long\n");
+  SelectMailboxByNameProvided(sslConnection, mailBoxName);
   free(mailBoxName);
 }
 
@@ -313,8 +272,173 @@ void GetEmailCountForMailBox(SSL *sslConnection){
   snprintf(message, sizeof(message), "A%d STATUS \"%s\" (MESSAGES)\r\n", cursor++, mailBoxName);
   if(SendAndReceiveImapMessage(message,sslConnection) == -1)
     printf("Status failed\n");
+  // printf("Number of emails in mailbox: %d\n", numberOfEmails);
   free(mailBoxName);
 }
+
+void GetUnseenMailsFromMailBox(SSL *sslConnection){//TODO
+  char message[100];
+  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE*sizeof(char));
+  printf("Enter mailbox name: ");
+  scanf("%s", mailBoxName);
+  if(strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE){
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  SelectMailboxByNameProvided(sslConnection, mailBoxName);
+  snprintf(message, sizeof(message), "A%d SEARCH UNSEEN\r\n", cursor++);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Search failed\n");
+  free(mailBoxName);
+}
+
+void GetTopMailsFromMailBox(SSL *sslConnection){//TODO
+  char message[100];
+  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE*sizeof(char));
+  printf("Enter mailbox name: ");
+  scanf("%s", mailBoxName);
+  if(strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE){
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  SelectMailboxByNameProvided(sslConnection, mailBoxName);
+  snprintf(message, sizeof(message), "A%d FETCH 1:* (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])\r\n", cursor++);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Fetch failed\n");
+  free(mailBoxName);
+}
+
+void MoveEmailFromOneMailBoxToAnother(SSL *sslConnection){//TODO
+  char message[100];
+  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE*sizeof(char));
+  char *newMailBoxName = malloc(MAX_MAILBOX_NAME_SIZE*sizeof(char));
+  printf("Enter mailbox name: ");
+  scanf("%s", mailBoxName);
+  if(strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE){
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  printf("Enter new mailbox name: ");
+  scanf("%s", newMailBoxName);
+  if(strlen(newMailBoxName) > MAX_MAILBOX_NAME_SIZE){
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  snprintf(message, sizeof(message), "A%d COPY 1:* \"%s\"\r\n", cursor++, newMailBoxName);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Copy failed\n");
+  snprintf(message, sizeof(message), "A%d STORE 1:* +FLAGS.SILENT (\\Deleted)\r\n", cursor++);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Store failed\n");
+  snprintf(message, sizeof(message), "A%d EXPUNGE\r\n", cursor++);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Expunge failed\n");
+  free(mailBoxName);
+  free(newMailBoxName);
+}
+
+void GetAllEmailsFromMailBox(SSL *sslConnection){//TODO
+  char message[100];
+  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE*sizeof(char));
+  printf("Enter mailbox name: ");
+  scanf("%s", mailBoxName);
+  if(strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE){
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  SelectMailboxByNameProvided(sslConnection, mailBoxName);
+  snprintf(message, sizeof(message), "A%d FETCH 1:* (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])\r\n", cursor++);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Fetch failed\n");
+  free(mailBoxName);
+}
+
+void DeleteEmailFromMailBox(SSL *sslConnection){//TODO
+  char message[100];
+  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE*sizeof(char));
+  printf("Enter mailbox name: ");
+  scanf("%s", mailBoxName);
+  if(strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE){
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  SelectMailboxByNameProvided(sslConnection, mailBoxName);
+  snprintf(message, sizeof(message), "A%d STORE 1:* +FLAGS.SILENT (\\Deleted)\r\n", cursor++);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Store failed\n");
+  snprintf(message, sizeof(message), "A%d EXPUNGE\r\n", cursor++);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Expunge failed\n");
+  free(mailBoxName);
+}
+
+void GetMailByUID(SSL *sslConnection){// retrieve data needed
+  char message[100];
+  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE*sizeof(char));
+  char *uid = malloc(10*sizeof(char));
+  printf("Enter mailbox name: ");
+  scanf("%s", mailBoxName);
+  if(strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE){
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  printf("Enter UID: ");
+  scanf("%s", uid);
+  SelectMailboxByNameProvided(sslConnection, mailBoxName);
+  snprintf(message, sizeof(message), "A%d FETCH %s (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])\r\n", cursor++, uid);
+  if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+    printf("Fetch failed\n");
+  free(mailBoxName);
+  free(uid);
+}
+
+// void CheckInboxByUID(SSL *sslConnection){
+//   char message[100];
+//   snprintf(message, sizeof(message), "A%d SELECT INBOX\r\n", cursor++);
+//   if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+//     printf("Select failed\n");
+//   snprintf(message, sizeof(message), "A%d UID SEARCH ALL\r\n", cursor++);
+//   if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+//     printf("Search failed\n");
+// }
+
+// int UserIsLoggedIn(SSL *sslConnection){
+//   char message[100];
+//   snprintf(message, sizeof(message), "A%d CAPABILITY\r\n", cursor++);
+//   if(SendAndReceiveImapMessage(message,sslConnection) == -1)
+//     return 0;
+//   char *response = imap_recv(sslConnection, 100);
+//   int is_ok = check_ok(response);
+//   free(response);
+//   return is_ok;
+// }
+
+
+// void SendEmail(SSL *sslConnection){
+//   char *recipient, *subject, *message;
+//   recipient = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
+//   subject = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
+//   message = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
+//   printf("Enter recipient: ");
+//   scanf("%s", recipient);
+//   printf("Enter subject: ");
+//   scanf("%s", subject);
+//   printf("Enter message: ");
+//   scanf("%s", message);
+//   char message_to_send[MAX_EMAIL_ADDRESS_LENGTH*2+100];
+//   snprintf(message_to_send, sizeof(message_to_send), "A%d MAIL FROM: <%s>\r\n", cursor++, "
+//   snprintf(message_to_send, sizeof(message_to_send), "A%d RCPT TO: <%s>\r\n", cursor++, recipient);
+//   snprintf(message_to_send, sizeof(message_to_send), "A%d DATA\r\n", cursor++);
+//   snprintf(message_to_send, sizeof(message_to_send), "A%d FROM: <%s>\r\n", cursor++, "
+//   snprintf(message_to_send, sizeof(message_to_send), "A%d SUBJECT: %s\r\n", cursor++, subject);
+//   snprintf(message_to_send, sizeof(message_to_send), "A%d %s\r\n", cursor++, message);
+//   snprintf(message_to_send, sizeof(message_to_send), "A%d .\r\n", cursor++);
+//   if(SendAndReceiveImapMessage(message_to_send,sslConnection) == -1)
+//     printf("Send failed\n");
+//   free(recipient);
+//   free(subject);
+//   free(message);
+// }
 
 void ShowImapCommands(SSL* sslConnection){
   int count = -1;
@@ -323,44 +447,34 @@ void ShowImapCommands(SSL* sslConnection){
     char message[100];
 //should i process responses properly?
 //
-//noop?+
-//get count+
 //search
-//select
-
-//login +
-//check response +
-//create mailbox+
-//deletemailbox+
-//rename mailbox+
-//get mailboxes+
-//get unseen emails
-//get top emails
+// get mail by uid~
+// fix get count to print more detailed info
+//get unseen emails~
+//get top emails~
 //get mail
-//move mail
-//get all mails
+//move mail~
+//get all mails~
 //get mails
-//delete mail
+//delete mail~
     snprintf(message, sizeof(message), "A%d ", cursor++);
     printf("select what to do:\n"
            "1. check connection status \n"
            "2. login \n"
-           "3. check inbox \n"
-           "4. get mail \n"
-           "5. delete mail \n"
-           "6. get mails \n"
-           "7. get unseen mails \n"
-           "8. get top mails \n"
-           "9. get all mails \n"
-           "10. move mail \n"
-           "11. delete mail \n"
-           "12. get mailboxes \n"
-           "13. create mailbox \n"
-           "14. rename mailbox \n"
-           "15. delete mailbox \n"
-           "16. get mailbox count \n"
-           "17. logout \n"
-           "18. close system \n");
+           "3. select inbox \n"
+           "4. get mails by uid \n"
+           "5. get unseen mails \n"
+           "6. get top mails \n"
+           "7. get all mails \n"
+           "8. move mail \n"
+           "9. delete mail \n"
+           "10. get mailboxes \n"
+           "11. create mailbox \n"
+           "12. rename mailbox \n"
+           "13. delete mailbox \n"
+           "14. get mailbox email count \n"
+           "15. logout \n"
+           "16. close system \n");
     scanf("%d",&count);
     char mailbox[100];
     switch(count){
@@ -374,55 +488,52 @@ void ShowImapCommands(SSL* sslConnection){
         SelectMailboxByName(sslConnection);
         break;
       case 4:
-      //take inbox name and get mail
+        GetMailByUID(sslConnection);
         break;
       case 5:
+        // printf("enter mailbox\n");
+        // scanf("%s",mailbox);
+        // strcat(strcat(strcat(message,"SELECT \""),mailbox),"\"\r\n");
+        // SendAndReceiveImapMessage(message,sslConnection);
+        // snprintf(message, sizeof(message), "A%d ", cursor++);
+        // strcat(message,"uid search unseen\r\n");
+        // runProgram=0;
+        GetUnseenMailsFromMailBox(sslConnection);
         break;
       case 6:
+        GetTopMailsFromMailBox(sslConnection);
         break;
       case 7:
-        printf("enter mailbox\n");
-        scanf("%s",mailbox);
-        strcat(strcat(strcat(message,"SELECT \""),mailbox),"\"\r\n");
-        SendAndReceiveImapMessage(message,sslConnection);
-        snprintf(message, sizeof(message), "A%d ", cursor++);
-        strcat(message,"uid search unseen\r\n");
-        runProgram=0;
+        GetAllEmailsFromMailBox(sslConnection);
         break;
       case 8:
-        runProgram=0;
+        MoveEmailFromOneMailBoxToAnother(sslConnection);
         break;
       case 9:
-        runProgram=0;
+        DeleteEmailFromMailBox(sslConnection);
         break;
       case 10:
-        runProgram=0;
-        break;
-      case 11:
-        runProgram=0;
-        break;
-      case 12:
         GetMailBoxes(sslConnection);
         break;
-      case 13:
+      case 11:
         CreateMailBox(sslConnection);
         break;
-      case 14:
+      case 12:
         RenameMailBox(sslConnection);
         break;
-      case 15:
+      case 13:
         DeleteMailBox(sslConnection);
         break;
-      case 16:
+      case 14:
         GetEmailCountForMailBox(sslConnection);
         break;
-      case 17:
+      case 15:
         LogoutUser(sslConnection);
         break;
-      case 19:
+      case 17:
         LoginUserHardcoded(sslConnection);
         break;
-      case 20:
+      case 18:
         noop(sslConnection);//what is this?
         break;
       default:
