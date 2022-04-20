@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+// test with old version if it works if spammed commands
 int initializeClient(char host[], char port[]) {
   int socketId;
   struct addrinfo *servInfo, *currInfo, hints;
@@ -51,7 +51,7 @@ char *imap_recv(SSL *sslConnection, size_t size) {
   char *buffer = malloc((size) * sizeof(char));
   char *result = malloc((size) * sizeof(char));
   while ((rc = SSL_read(sslConnection, buffer, size))) {
-    if (rc == -2)
+    if (rc == -1)
       continue;
 
     buffer[rc] = '\0';

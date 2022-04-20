@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+// should i process responses properly?
+// search
 #define MAX_EMAIL_ADDRESS_LENGTH 320
 #define MAX_MAILBOX_NAME_SIZE 20
 
@@ -20,11 +21,18 @@ void GetEmailCountForMailBox(SSL *sslConnection, int *cursor) {
            (*cursor)++, mailBoxName);
   if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
     printf("Status failed\n");
-  // printf("Number of emails in mailbox: %d\n", numberOfEmails);
+  // printf("Number of emails in mailbox: %d\n", numberOfEmails);//detailed info
   free(mailBoxName);
 }
 
 void GetUnseenMailsFromMailBox(SSL *sslConnection, int *cursor) { // TODO
+  // printf("enter mailbox\n");
+  // scanf("%s",mailbox);
+  // strcat(strcat(strcat(message,"SELECT \""),mailbox),"\"\r\n");
+  // SendAndReceiveImapMessage(message,sslConnection,&cursor);
+  // snprintf(message, sizeof(message), "A%d ", (*cursor)++);
+  // strcat(message,"uid search unseen\r\n");
+  // runProgram=0;
   char message[100];
   char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
   printf("Enter mailbox name: ");
@@ -193,24 +201,11 @@ void ShowImapCommands(SSL *sslConnection) {
   int count = -1;
   int runProgram = 1;
   while (runProgram) {
-    char message[100];
-    // should i process responses properly?
-    //
-    // search
-    //  fix get count to print more detailed info
-    // get unseen emails~
-    // get top emails~
-    //  get mail by uid~
-    // move mail~
-    // get all mails~
-    // get mails~
-    // delete mail~
-    //  snprintf(message, sizeof(message), "A%d ", (*cursor)++);
     printf("select what to do:\n"
            "1. check connection status \n"
            "2. login \n"
            "3. select inbox \n"
-           "4. get mails by uid \n"
+           "4. get mail by uid \n"
            "5. get unseen mails \n"
            "6. get top mails \n"
            "7. get all mails \n"
@@ -224,7 +219,6 @@ void ShowImapCommands(SSL *sslConnection) {
            "15. logout \n"
            "16. close system \n");
     scanf("%d", &count);
-    char mailbox[100];
     switch (count) {
     case 1:
       CheckConnectionStatus(sslConnection, &cursor);
@@ -239,13 +233,6 @@ void ShowImapCommands(SSL *sslConnection) {
       GetMailByUID(sslConnection, &cursor);
       break;
     case 5:
-      // printf("enter mailbox\n");
-      // scanf("%s",mailbox);
-      // strcat(strcat(strcat(message,"SELECT \""),mailbox),"\"\r\n");
-      // SendAndReceiveImapMessage(message,sslConnection,&cursor);
-      // snprintf(message, sizeof(message), "A%d ", (*cursor)++);
-      // strcat(message,"uid search unseen\r\n");
-      // runProgram=0;
       GetUnseenMailsFromMailBox(sslConnection, &cursor);
       break;
     case 6:
