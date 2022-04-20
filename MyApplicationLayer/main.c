@@ -167,34 +167,63 @@ void GetMailByUID(SSL *sslConnection, int *cursor) { // retrieve data needed
 //     printf("Search failed\n");
 // }
 
-// void SendEmail(SSL *sslConnection,int *cursor){
-//   char *recipient, *subject, *message;
-//   recipient = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
-//   subject = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
-//   message = malloc(MAX_EMAIL_ADDRESS_LENGTH*sizeof(char));
-//   printf("Enter recipient: ");
-//   scanf("%s", recipient);
-//   printf("Enter subject: ");
-//   scanf("%s", subject);
-//   printf("Enter message: ");
-//   scanf("%s", message);
-//   char message_to_send[MAX_EMAIL_ADDRESS_LENGTH*2+100];
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d MAIL FROM:
-//   <%s>\r\n", (*cursor)++, " snprintf(message_to_send,
-//   sizeof(message_to_send), "A%d RCPT TO: <%s>\r\n", (*cursor)++, recipient);
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d DATA\r\n",
-//   (*cursor)++); snprintf(message_to_send, sizeof(message_to_send), "A%d FROM:
-//   <%s>\r\n", (*cursor)++, " snprintf(message_to_send,
-//   sizeof(message_to_send), "A%d SUBJECT: %s\r\n", (*cursor)++, subject);
-//   snprintf(message_to_send, sizeof(message_to_send), "A%d %s\r\n",
-//   (*cursor)++, message); snprintf(message_to_send, sizeof(message_to_send),
-//   "A%d .\r\n", (*cursor)++);
-//   if(SendAndReceiveImapMessage(message_to_send,sslConnection,&cursor) == -1)
-//     printf("Send failed\n");
-//   free(recipient);
-//   free(subject);
-//   free(message);
-// }
+void Search(SSL *sslConnection, int *cursor) {// TODO
+  char message[100];
+  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
+  char *from = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char)); // change sizes
+  char *to = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
+  char *subject = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
+  char *text = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
+  char *nottext = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
+  char *since = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
+  char *before = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
+  printf("Enter mailbox name: ");
+  // get whole line from console and store it in mailBoxName variable 
+  scanf("%99[^\n]%*c", mailBoxName);
+  if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  printf("Enter from: ");
+  scanf("%99[^\n]%*c", from);
+  if (strlen(from) > MAX_MAILBOX_NAME_SIZE) {
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  printf("Enter to: ");
+  scanf("%99[^\n]%*c", to);
+  if (strlen(to) > MAX_MAILBOX_NAME_SIZE) {
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  printf("Enter subject: ");
+  scanf("%99[^\n]%*c", subject);
+  if (strlen(subject) > MAX_MAILBOX_NAME_SIZE) {
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  printf("Enter text: ");
+  scanf("%99[^\n]%*c", text);
+  if (strlen(text) > MAX_MAILBOX_NAME_SIZE) {
+    printf("Mailbox name is too long\n");
+    return;
+  }
+  // search Mailbox for those criteria
+  snprintf(message, sizeof(message),
+           "A%d SEARCH INBOX FROM \"%s\" TO \"%s\" SUBJECT \"%s\" TEXT \"%s\" "
+           "NOTTEXT \"%s\" SINCE \"%s\" BEFORE \"%s\"\r\n",
+           (*cursor)++, from, to, subject, text, nottext, since, before);
+  if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
+    printf("Search failed\n");
+  free(mailBoxName);
+  free(from);
+  free(to);
+  free(subject);
+  free(text);
+  free(nottext);
+  free(since);
+  free(before);
+}
 
 void ShowImapCommands(SSL *sslConnection) {
   int cursor = 1;
@@ -271,6 +300,8 @@ void ShowImapCommands(SSL *sslConnection) {
     case 18:
       noop(sslConnection, &cursor); // what is this?
       break;
+    case 19:
+      Search(sslConnection, &cursor);
     default:
       runProgram = 0;
       break;
