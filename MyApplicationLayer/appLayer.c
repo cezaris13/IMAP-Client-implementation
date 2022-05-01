@@ -2,6 +2,7 @@
 #include "sockets.h"
 #include <ctype.h>
 #include <string.h>
+#define MESSAGE_LENGTH 320
 
 int SendAndReceiveImapMessage(char *command, SSL *sslConnection, int silent) {
   if (silent == 0)
@@ -94,6 +95,7 @@ void CreateMailBox(SSL *sslConnection, int *cursor) {
   scanf("%s", mailBoxName);
   if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
     printf("Mailbox name is too long\n");
+    free(mailBoxName);
     return;
   }
   snprintf(message, sizeof(message), "A%d CREATE \"%s\"\r\n", (*cursor)++,
@@ -110,6 +112,7 @@ void DeleteMailBox(SSL *sslConnection, int *cursor) {
   scanf("%s", mailBoxName);
   if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
     printf("Mailbox name is too long\n");
+    free(mailBoxName);
     return;
   }
   snprintf(message, sizeof(message), "A%d DELETE \"%s\"\r\n", (*cursor)++,
@@ -127,12 +130,16 @@ void RenameMailBox(SSL *sslConnection, int *cursor) {
   scanf("%s", mailBoxName);
   if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
     printf("Mailbox name is too long\n");
+    free(mailBoxName);
+    free(newMailBoxName);
     return;
   }
   printf("Enter new mailbox name: ");
   scanf("%s", newMailBoxName);
   if (strlen(newMailBoxName) > MAX_MAILBOX_NAME_SIZE) {
     printf("Mailbox name is too long\n");
+    free(mailBoxName);
+    free(newMailBoxName);
     return;
   }
   snprintf(message, sizeof(message), "A%d RENAME \"%s\" \"%s\"\r\n",
@@ -157,6 +164,7 @@ void GetEmailCountForMailBox(SSL *sslConnection, int *cursor) {
   scanf("%s", mailBoxName);
   if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
     printf("Mailbox name is too long\n");
+    free(mailBoxName);
     return;
   }
   snprintf(message, sizeof(message), "A%d EXAMINE \"%s\"\r\n", (*cursor)++,
@@ -173,6 +181,7 @@ void DeleteEmailFromMailBox(SSL *sslConnection, int *cursor) {
   scanf("%s", mailBoxName);
   if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
     printf("Mailbox name is too long\n");
+    free(mailBoxName);
     return;
   }
   SelectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
@@ -182,8 +191,12 @@ void DeleteEmailFromMailBox(SSL *sslConnection, int *cursor) {
 
   snprintf(message, sizeof(message), "A%d UID STORE %s +FLAGS (\\Deleted)\r\n",
            (*cursor)++, uid);
-  if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
+  if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1) {
     printf("Store failed\n");
+    free(uid);
+    free(mailBoxName);
+    return;
+  }
   snprintf(message, sizeof(message), "A%d UID EXPUNGE %s\r\n", (*cursor)++,
            uid);
   if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
@@ -246,31 +259,6 @@ void MoveEmailFromOneMailBoxToAnother(SSL *sslConnection, int *cursor) {
   free(uid);
 }
 
-void GetMailByUID(SSL *sslConnection, int *cursor) {
-  char message[100];
-  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
-  char *uid = malloc(10 * sizeof(char));
-  printf("Enter mailbox name: ");
-  scanf("%s", mailBoxName);
-  if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
-    printf("Mailbox name is too long\n");
-    free(mailBoxName);
-    free(uid);
-    return;
-  }
-  printf("Enter UID: ");
-  scanf("%s", uid);
-  SelectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
-
-  snprintf(message, sizeof(message),
-           "A%d FETCH %s (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])\r\n",
-           (*cursor)++, uid);
-  if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
-    printf("Fetch failed\n");
-  free(mailBoxName);
-  free(uid);
-}
-
 void Search(SSL *sslConnection, int *cursor) {
   char message[1000];
   char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
@@ -286,6 +274,14 @@ void Search(SSL *sslConnection, int *cursor) {
   scanf("%s", mailBoxName);
   if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
     printf("Mailbox name is too long\n");
+    free(mailBoxName);
+    free(from);
+    free(to);
+    free(subject);
+    free(text);
+    free(nottext);
+    free(since);
+    free(before);
     return;
   }
   getline(&from, &bufsize, stdin);
@@ -336,7 +332,7 @@ void Search(SSL *sslConnection, int *cursor) {
   strcat(message, "\r\n");
   if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
     printf("Search failed\n");
-  free(mailBoxName); // throws segfault
+  free(mailBoxName);
   free(from);
   free(to);
   free(subject);
@@ -344,6 +340,31 @@ void Search(SSL *sslConnection, int *cursor) {
   free(nottext);
   free(since);
   free(before);
+}
+
+void GetMailByUID(SSL *sslConnection, int *cursor) {
+  char message[100];
+  char *mailBoxName = malloc(MAX_MAILBOX_NAME_SIZE * sizeof(char));
+  char *uid = malloc(10 * sizeof(char));
+  printf("Enter mailbox name: ");
+  scanf("%s", mailBoxName);
+  if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
+    printf("Mailbox name is too long\n");
+    free(mailBoxName);
+    free(uid);
+    return;
+  }
+  printf("Enter UID: ");
+  scanf("%s", uid);
+  SelectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
+
+  snprintf(message, sizeof(message),
+           "A%d FETCH %s (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])\r\n",
+           (*cursor)++, uid);
+  if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
+    printf("Fetch failed\n");
+  free(mailBoxName);
+  free(uid);
 }
 
 // analyze
@@ -394,6 +415,7 @@ void GetAllEmailsFromMailBox(SSL *sslConnection, int *cursor) {
   scanf("%s", mailBoxName);
   if (strlen(mailBoxName) > MAX_MAILBOX_NAME_SIZE) {
     printf("Mailbox name is too long\n");
+    free(mailBoxName);
     return;
   }
   SelectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
@@ -403,3 +425,20 @@ void GetAllEmailsFromMailBox(SSL *sslConnection, int *cursor) {
   free(mailBoxName);
 }
 // analyze later end
+
+void ShowFileContents(char *fileName) {
+  char *extension = strrchr(fileName, '.');
+  if (extension != NULL && strcmp(extension, ".txt") == 0) {
+    printf("\nPrinting contents of %s\n", fileName);
+    FILE *file = fopen(fileName, "r");
+    if (file != NULL) {
+      char line[256];
+      while (fgets(line, sizeof(line), file) != NULL) {
+        printf("%s", line);
+      }
+      fclose(file);
+    } else {
+      printf("\nCould not open file %s\n", fileName);
+    }
+  }
+}

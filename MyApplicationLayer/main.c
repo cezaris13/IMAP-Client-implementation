@@ -76,6 +76,7 @@ void ShowImapCommands(SSL *sslConnection) {
       break;
     case 17:
       Search(sslConnection, &cursor);
+      break;
     default:
       runProgram = 0;
       break;

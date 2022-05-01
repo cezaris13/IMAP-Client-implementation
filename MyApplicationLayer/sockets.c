@@ -48,8 +48,8 @@ char *imap_recv(SSL *sslConnection, size_t size) {
   size_t cursor = 0;
   int rc;
 
-  char *buffer = malloc((size) * sizeof(char));
-  char *result = malloc((size) * sizeof(char));
+  char *buffer = (char *)malloc((size) * sizeof(char));
+  char *result = (char *)malloc((size) * sizeof(char));
   while ((rc = SSL_read(sslConnection, buffer, size))) {
     if (rc == -1)
       continue;
