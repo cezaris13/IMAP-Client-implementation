@@ -18,6 +18,25 @@ int SendAndReceiveImapMessage(string command, SSL *sslConnection, int silent) {
     return -1;
 }
 
+Data SendAndReceiveImapMessage3(string command, SSL *sslConnection,
+                                int silent) {
+  Data data;
+  if (silent == 0)
+    cout << "C: " << command << endl;
+  SSL_write(sslConnection, command.c_str(), command.length());
+  string response = imap_recv(sslConnection, 100);
+  int is_ok = check_ok(response);
+  if (silent == 0)
+    cout << "S: " << response << endl;
+  if (is_ok)
+    data.statusCode = 0;
+  else
+    data.statusCode = -1;
+  data.message = response;
+
+  return data;
+}
+
 void CheckConnectionStatus(SSL *sslConnection, int *cursor) {
   string message;
   message += "A" + to_string((*cursor)++) + " CAPABILITY\r\n";
@@ -300,18 +319,49 @@ void GetMailByUID(SSL *sslConnection, int *cursor) {
   printf("Enter UID: ");
   cin >> uid;
   SelectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
-
-  message = "A" + to_string((*cursor)++) + " FETCH " + uid +
-            " RFC822\r\n";
-  if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
+  message = "A" + to_string((*cursor)++) + " UID FETCH " + uid +
+            " (BODY.PEEK[1])\r\n";
+  Data res0 = SendAndReceiveImapMessage3(message, sslConnection, 1);
+  size_t found = res0.message.find("text/plain; charset=\"UTF-8\"");
+  string t =
+      res0.message.substr(found + strlen("text/plain; charset=\"UTF-8\""));
+  found = t.find("--");
+  string text = t.substr(0, found);
+  cout << "text: " << text << endl;
+  message = "A" + to_string((*cursor)++) + " UID FETCH " + uid +
+            " (BODY.PEEK[2])\r\n";
+  Data ret = SendAndReceiveImapMessage3(message, sslConnection, 1);
+  string response = ret.message;
+  string mess = response.substr(response.find("}") + 3,
+                                response.find(")") - response.find("}") - 3);
+  mess.erase(remove(mess.begin(), mess.end(), '\r'));
+  mess.erase(remove(mess.begin(), mess.end(), '\n'));
+  mess[mess.size() - 1] = 0;
+  ret.message = base64_decode(mess);
+  message = "A" + to_string((*cursor)++) + " UID FETCH " + uid +
+            " (BODY.PEEK[TEXT])\r\n";
+  Data result = SendAndReceiveImapMessage3(message, sslConnection, 1);
+  found = result.message.find("filename");
+  string filename = result.message.substr(found);
+  filename = filename.substr(filename.find("\"") + 1,
+                             filename.find("\"", filename.find("\"") + 1) -
+                                 filename.find("\"") - 1);
+  if (ret.statusCode == -1 || result.statusCode == -1) {
     printf("Fetch failed\n");
+    return;
+  }
+
+  ofstream file;
+  file.open(filename);
+  file << ret.message;
+  file.close();
+  ShowFileContents(filename);
 }
 
-// analyze
 void GetHeaderOfEmailByUID(SSL *sslConnection, int *cursor, long uid) {
   string message;
-  message = "A" + to_string((*cursor)++) + " FETCH " + to_string(uid) +
-            " RFC822\r\n";
+  message = "A" + to_string((*cursor)++) + " UID FETCH " + to_string(uid) +
+            " (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])\r\n";
   if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
     printf("Fetch failed\n");
 }
@@ -365,21 +415,70 @@ void GetAllEmailsFromMailBox(SSL *sslConnection, int *cursor) {
   if (SendAndReceiveImapMessage1(message, sslConnection, cursor, 0) == -1)
     printf("Fetch failed\n");
 }
-// analyze later end
 
-void ShowFileContents(char *fileName) {
-  char *extension = strrchr(fileName, '.');
-  if (extension != NULL && strcmp(extension, ".txt") == 0) {
-    printf("\nPrinting contents of %s\n", fileName);
-    FILE *file = fopen(fileName, "r");
-    if (file != NULL) {
-      char line[256];
-      while (fgets(line, sizeof(line), file) != NULL) {
-        printf("%s", line);
-      }
-      fclose(file);
-    } else {
-      printf("\nCould not open file %s\n", fileName);
+void ShowFileContents(string fileName) {
+  if (fileName.substr(fileName.length() - 4, 4) != ".txt")
+    return;
+  ifstream file;
+  file.open(fileName);
+  string line;
+  while (getline(file, line)) {
+    cout << line << endl;
+  }
+  file.close();
+}
+
+const string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                            "abcdefghijklmnopqrstuvwxyz"
+                            "0123456789+/";
+
+bool is_base64(unsigned char c) {
+  return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
+string base64_decode(string const &encoded_string) {
+  int in_len = encoded_string.size();
+  int i = 0;
+  int j = 0;
+  int in_ = 0;
+  unsigned char char_array_4[4], char_array_3[3];
+  string ret;
+
+  while (in_len-- && (encoded_string[in_] != '=') &&
+         is_base64(encoded_string[in_])) {
+    char_array_4[i++] = encoded_string[in_];
+    in_++;
+    if (i == 4) {
+      for (i = 0; i < 4; i++)
+        char_array_4[i] = base64_chars.find(char_array_4[i]);
+
+      char_array_3[0] =
+          (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+      char_array_3[1] =
+          ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+      char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+      for (i = 0; (i < 3); i++)
+        ret += char_array_3[i];
+      i = 0;
     }
   }
+
+  if (i) {
+    for (j = i; j < 4; j++)
+      char_array_4[j] = 0;
+
+    for (j = 0; j < 4; j++)
+      char_array_4[j] = base64_chars.find(char_array_4[j]);
+
+    char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+    char_array_3[1] =
+        ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+    char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+    for (j = 0; (j < i - 1); j++)
+      ret += char_array_3[j];
+  }
+
+  return ret;
 }

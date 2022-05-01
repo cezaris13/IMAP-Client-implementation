@@ -30,4 +30,10 @@ void GetIntsFromString(SSL *sslConnection, int *cursor, string str);
 int SendAndReceiveImapMessage1(string command, SSL *sslConnection, int *cursor,
                                int silent);
 void GetAllEmailsFromMailBox(SSL *sslConnection, int *cursor);
+string base64_decode(string const &encoded_string);
+void ShowFileContents(string fileName);
+struct Data {
+  int statusCode;
+  string message;
+};
 #endif
