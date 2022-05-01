@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// should i process responses properly?
+#include<bits/stdc++.h>
 #define MAX_EMAIL_ADDRESS_LENGTH 320
 #define MAX_MAILBOX_NAME_SIZE 20
+using namespace std;
 
 void ShowImapCommands(SSL *sslConnection) {
   int cursor = 1;
@@ -93,9 +94,8 @@ int main() {
     fprintf(stderr, "fd = %d\n", fd);
   }
   SSL *sslConnection = ConnectSSL(fd);
-  char *result = imap_recv(sslConnection, 100);
-  printf("S: %s\n", result);
-  free(result);
+  string result = imap_recv(sslConnection, 100);
+  cout<<"S: "<<result<<endl;
 
   ShowImapCommands(sslConnection);
 

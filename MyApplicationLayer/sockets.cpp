@@ -8,7 +8,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-// test with old version if it works if spammed commands
+using namespace std;
+
 int initializeClient(char host[], char port[]) {
   int socketId;
   struct addrinfo *servInfo, *currInfo, hints;
@@ -44,40 +45,27 @@ int initializeClient(char host[], char port[]) {
   return socketId;
 }
 
-char *imap_recv(SSL *sslConnection, size_t size) {
+string imap_recv(SSL *sslConnection, size_t size) {
   size_t cursor = 0;
   int rc;
 
-  char *buffer = (char *)malloc((size) * sizeof(char));
-  char *result = (char *)malloc((size) * sizeof(char));
+  char buffer[size];
+  string result;
   while ((rc = SSL_read(sslConnection, buffer, size))) {
     if (rc == -1)
       continue;
 
     buffer[rc] = '\0';
-    int len = (sizeof(char) * (cursor++) * (size)) + rc;
-    char *temp_str = buffer;
-    char *temp_res = malloc(len);
 
-    memcpy(temp_res, result, len);
-
-    if (result != NULL) {
-      strcat(temp_res, temp_str);
-      memcpy(result, temp_res, strlen(temp_res) + 1);
-    } else {
-      memcpy(result, buffer, strlen(buffer) + 1);
-    }
-    free(temp_res);
+    result+=buffer;
     if (rc < size)
       break;
   }
-
-  free(buffer);
   return result;
 }
 
-int check_ok(char *str) {
-  int len = (int)strlen(str);
+int check_ok(string str) {
+  int len = str.length();
   int is_ok = 0;
   for (int i = 0; i < len; i++) {
     if (i + 4 > len)
