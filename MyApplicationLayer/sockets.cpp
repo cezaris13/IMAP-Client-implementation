@@ -17,7 +17,7 @@ int initializeClient(char host[], char port[]) {
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
-
+  struct timeval tv;
   if (getaddrinfo(host, port, &hints, &servInfo) != 0) {
     printf("getaddrinfo error\n");
     return -2;
@@ -40,6 +40,9 @@ int initializeClient(char host[], char port[]) {
     printf("client failed to connect\n");
     return -1;
   }
+  tv.tv_sec = 1;
+  tv.tv_usec = 0;
+  setsockopt(socketId, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
   freeaddrinfo(servInfo);
   return socketId;
@@ -51,15 +54,11 @@ string imap_recv(SSL *sslConnection, size_t size) {
 
   char buffer[size];
   string result;
-  while ((rc = SSL_read(sslConnection, buffer, size))) {
-    if (rc == -1)
-      continue;
+  while ((rc = SSL_read(sslConnection, buffer, size))>0) {
 
     buffer[rc] = '\0';
 
-    result+=buffer;
-    if (rc < size)
-      break;
+    result += buffer;
   }
   return result;
 }
@@ -82,7 +81,7 @@ SSL *ConnectSSL(int socketId) {
   SSL_load_error_strings();
   SSL_library_init();
   OpenSSL_add_all_algorithms();
-  SSL_CTX *sslContext = SSL_CTX_new(SSLv23_client_method());
+  SSL_CTX *sslContext = SSL_CTX_new(SSLv23_method());
   if (sslContext == NULL) {
     printf("err\n");
   }
@@ -94,8 +93,7 @@ SSL *ConnectSSL(int socketId) {
   }
   SSL_set_fd(sslConnection, socketId);
 
-  SSL_set_mode(sslConnection, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER |
-                                  SSL_MODE_ENABLE_PARTIAL_WRITE);
+  SSL_set_mode(sslConnection, SSL_MODE_AUTO_RETRY);
   SSL_connect(sslConnection);
   return sslConnection;
 }

@@ -301,8 +301,8 @@ void GetMailByUID(SSL *sslConnection, int *cursor) {
   cin >> uid;
   SelectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
 
-  message = "A" + to_string((*cursor)++) + " UID FETCH " + uid +
-            " (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])\r\n";
+  message = "A" + to_string((*cursor)++) + " FETCH " + uid +
+            " RFC822\r\n";
   if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
     printf("Fetch failed\n");
 }
@@ -310,8 +310,8 @@ void GetMailByUID(SSL *sslConnection, int *cursor) {
 // analyze
 void GetHeaderOfEmailByUID(SSL *sslConnection, int *cursor, long uid) {
   string message;
-  message = "A" + to_string((*cursor)++) + " UID FETCH " + to_string(uid) +
-            " (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])\r\n";
+  message = "A" + to_string((*cursor)++) + " FETCH " + to_string(uid) +
+            " RFC822\r\n";
   if (SendAndReceiveImapMessage(message, sslConnection, 0) == -1)
     printf("Fetch failed\n");
 }
