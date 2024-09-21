@@ -5,9 +5,6 @@
 #include "appLayer.h"
 #include "sockets.h"
 
-#define MAX_EMAIL_ADDRESS_LENGTH 320
-#define MAX_MAILBOX_NAME_SIZE 20
-
 void ShowImapCommands(SSL *sslConnection) {
   int cursor = 1;
   int count = -1;

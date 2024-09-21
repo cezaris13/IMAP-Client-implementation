@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-// test with old version if it works if spammed commands
+
 int initializeClient(char host[], char port[]) {
   int socketId;
   struct addrinfo *servInfo, *currInfo, hints;
