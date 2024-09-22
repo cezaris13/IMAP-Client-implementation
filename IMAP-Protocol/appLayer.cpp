@@ -1,10 +1,13 @@
-#include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <bits/stdc++.h>
-#include <ctype.h>
+#include <algorithm>
+#include <sstream>
+#include <fstream>
 #include "sockets.h"
+
 #define MESSAGE_LENGTH 320
+#define MAX_MAILBOX_NAME_SIZE 20
+
 using namespace std;
 
 struct Data {

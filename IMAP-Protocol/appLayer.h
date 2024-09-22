@@ -1,9 +1,6 @@
 #ifndef MY_FUNC2_H
 #define MY_FUNC2_H
 #include "appLayer.cpp"
-#define MAX_EMAIL_ADDRESS_LENGTH 320
-#define MAX_MAILBOX_NAME_SIZE 20
-using namespace std;
 void checkConnectionStatus(SSL *sslConnection, int *cursor);
 void loginUser(SSL *sslConnection, int *cursor);
 void loginUserHardcoded(SSL *sslConnection, int *cursor);

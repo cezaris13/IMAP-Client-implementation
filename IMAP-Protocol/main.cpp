@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include<bits/stdc++.h>
-#define MAX_EMAIL_ADDRESS_LENGTH 320
-#define MAX_MAILBOX_NAME_SIZE 20
+#include <iostream>
 using namespace std;
 #include "appLayer.h"
 #include "sockets.h"
