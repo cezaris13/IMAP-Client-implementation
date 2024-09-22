@@ -1,9 +1,6 @@
 #ifndef MY_FUNC2_H
 #define MY_FUNC2_H
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <bits/stdc++.h>
+#include "appLayer.cpp"
 #define MAX_EMAIL_ADDRESS_LENGTH 320
 #define MAX_MAILBOX_NAME_SIZE 20
 using namespace std;
@@ -32,8 +29,4 @@ int SendAndReceiveImapMessage1(string command, SSL *sslConnection, int *cursor,
 void GetAllEmailsFromMailBox(SSL *sslConnection, int *cursor);
 string base64_decode(string const &encoded_string);
 void ShowFileContents(string fileName);
-struct Data {
-  int statusCode;
-  string message;
-};
 #endif

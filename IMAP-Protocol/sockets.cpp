@@ -7,6 +7,10 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include<bits/stdc++.h>
 using namespace std;
 
 int initializeClient(char host[], char port[]) {

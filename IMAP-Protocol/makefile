@@ -1,5 +1,5 @@
 build: 
-	g++ -g  main.cpp sockets.cpp appLayer.cpp -o main.o -L/usr/local/ssl/lib -lssl -lcrypto
+	g++ -g  main.cpp -o main.o -L/usr/local/ssl/lib -lssl -lcrypto
 	./main.o
 	
 debug: 
