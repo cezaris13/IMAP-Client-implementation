@@ -1,5 +1,5 @@
 struct Data {
-  int statusCode;
+  int statusCode; // 1 for success 0 for failure
   std::string message;
 };
 
@@ -76,10 +76,7 @@ Data sendAndReceiveImapMessage(std::string command, SSL *sslConnection,
   int isOk = checkOK(response);
   if (!silent)
     std::cout << "S: " << response << std::endl;
-  if (isOk)
-    data.statusCode = 0;
-  else
-    data.statusCode = -1;
+  data.statusCode = isOk;
   data.message = response;
 
   return data;
