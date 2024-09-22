@@ -17,10 +17,7 @@
 - Delete email from mailbox
 - Move email from one mailbox to another
 - Get mail by uid
-- search
-- Get header of email by uid
-- Get ints from string
-- Send and receive imap message1
+- Search
 - Get all emails from mailbox
 
 ## Running the program
@@ -28,7 +25,6 @@
 ```bash
 make build
 ```
-
 
 ## Resources
 
