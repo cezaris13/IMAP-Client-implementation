@@ -4,29 +4,22 @@
 #define MAX_EMAIL_ADDRESS_LENGTH 320
 #define MAX_MAILBOX_NAME_SIZE 20
 using namespace std;
-int SendAndReceiveImapMessage(string command, SSL *sslConnection, int silent);
-void CheckConnectionStatus(SSL *sslConnection, int *cursor);
-void LoginUser(SSL *sslConnection, int *cursor);
-void LoginUserHardcoded(SSL *sslConnection, int *cursor);
-void LogoutUser(SSL *sslConnection, int *cursor);
-void SelectMailboxByNameProvided(SSL *sslConnection, int *cursor,
+void checkConnectionStatus(SSL *sslConnection, int *cursor);
+void loginUser(SSL *sslConnection, int *cursor);
+void loginUserHardcoded(SSL *sslConnection, int *cursor);
+void logoutUser(SSL *sslConnection, int *cursor);
+void selectMailboxByNameProvided(SSL *sslConnection, int *cursor,
                                  string mailBoxName);
-void SelectMailboxByName(SSL *sslConnection, int *cursor);
-void GetMailBoxes(SSL *sslConnection, int *cursor);
-void CreateMailBox(SSL *sslConnection, int *cursor);
-void DeleteMailBox(SSL *sslConnection, int *cursor);
-void RenameMailBox(SSL *sslConnection, int *cursor);
+void selectMailboxByName(SSL *sslConnection, int *cursor);
+void getMailboxes(SSL *sslConnection, int *cursor);
+void createMailBox(SSL *sslConnection, int *cursor);
+void deleteMailbox(SSL *sslConnection, int *cursor);
+void renameMailbox(SSL *sslConnection, int *cursor);
 void noop(SSL *sslConnection, int *cursor);
-void GetEmailCountForMailBox(SSL *sslConnection, int *cursor);
-void DeleteEmailFromMailBox(SSL *sslConnection, int *cursor);
-void MoveEmailFromOneMailBoxToAnother(SSL *sslConnection, int *cursor);
-void GetMailByUID(SSL *sslConnection, int *cursor);
-void Search(SSL *sslConnection, int *cursor);
-void GetHeaderOfEmailByUID(SSL *sslConnection, int *cursor, long uid);
-void GetIntsFromString(SSL *sslConnection, int *cursor, string str);
-int SendAndReceiveImapMessage1(string command, SSL *sslConnection, int *cursor,
-                               int silent);
-void GetAllEmailsFromMailBox(SSL *sslConnection, int *cursor);
-string base64_decode(string const &encoded_string);
-void ShowFileContents(string fileName);
+void getEmailCountForMailbox(SSL *sslConnection, int *cursor);
+void deleteEmailFromMailbox(SSL *sslConnection, int *cursor);
+void moveEmailFromOneMailboxToAnother(SSL *sslConnection, int *cursor);
+void getMailByUID(SSL *sslConnection, int *cursor);
+void search(SSL *sslConnection, int *cursor);
+void getAllEmailsFromMailbox(SSL *sslConnection, int *cursor);
 #endif

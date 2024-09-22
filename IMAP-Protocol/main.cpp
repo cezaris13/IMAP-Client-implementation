@@ -8,7 +8,7 @@ using namespace std;
 #include "appLayer.h"
 #include "sockets.h"
 
-void ShowImapCommands(SSL *sslConnection) {
+void showImapCommands(SSL *sslConnection) {
   int cursor = 1;
   int count = -1;
   int runProgram = 1;
@@ -30,57 +30,57 @@ void ShowImapCommands(SSL *sslConnection) {
            "14. close system \n");
     scanf("%d", &count);
     switch (count) {
-    case 1:
-      CheckConnectionStatus(sslConnection, &cursor);
-      break;
-    case 2:
-      LoginUser(sslConnection, &cursor);
-      break;
-    case 3:
-      SelectMailboxByName(sslConnection, &cursor);
-      break;
-    case 4:
-      GetMailByUID(sslConnection, &cursor);
-      break;
-    case 5:
-      GetAllEmailsFromMailBox(sslConnection, &cursor);
-      break;
-    case 6:
-      MoveEmailFromOneMailBoxToAnother(sslConnection, &cursor);
-      break;
-    case 7:
-      DeleteEmailFromMailBox(sslConnection, &cursor);
-      break;
-    case 8:
-      GetMailBoxes(sslConnection, &cursor);
-      break;
-    case 9:
-      CreateMailBox(sslConnection, &cursor);
-      break;
-    case 10:
-      RenameMailBox(sslConnection, &cursor);
-      break;
-    case 11:
-      DeleteMailBox(sslConnection, &cursor);
-      break;
-    case 12:
-      GetEmailCountForMailBox(sslConnection, &cursor);
-      break;
-    case 13:
-      LogoutUser(sslConnection, &cursor);
-      break;
-    case 15:
-      LoginUserHardcoded(sslConnection, &cursor);
-      break;
-    case 16:
-      noop(sslConnection, &cursor);
-      break;
-    case 17:
-      Search(sslConnection, &cursor);
-      break;
-    default:
-      runProgram = 0;
-      break;
+      case 1:
+        checkConnectionStatus(sslConnection, &cursor);
+        break;
+      case 2:
+        loginUser(sslConnection, &cursor);
+        break;
+      case 3:
+        selectMailboxByName(sslConnection, &cursor);
+        break;
+      case 4:
+        getMailByUID(sslConnection, &cursor);
+        break;
+      case 5:
+        getAllEmailsFromMailbox(sslConnection, &cursor);
+        break;
+      case 6:
+        moveEmailFromOneMailboxToAnother(sslConnection, &cursor);
+        break;
+      case 7:
+        deleteEmailFromMailbox(sslConnection, &cursor);
+        break;
+      case 8:
+        getMailboxes(sslConnection, &cursor);
+        break;
+      case 9:
+        createMailBox(sslConnection, &cursor);
+        break;
+      case 10:
+        renameMailbox(sslConnection, &cursor);
+        break;
+      case 11:
+        deleteMailbox(sslConnection, &cursor);
+        break;
+      case 12:
+        getEmailCountForMailbox(sslConnection, &cursor);
+        break;
+      case 13:
+        logoutUser(sslConnection, &cursor);
+        break;
+      case 15:
+        loginUserHardcoded(sslConnection, &cursor);
+        break;
+      case 16:
+        noop(sslConnection, &cursor);
+        break;
+      case 17:
+        search(sslConnection, &cursor);
+        break;
+      default:
+        runProgram = 0;
+        break;
     }
   }
 }
@@ -93,12 +93,12 @@ int main() {
   } else {
     fprintf(stderr, "fd = %d\n", fd);
   }
-  SSL *sslConnection = ConnectSSL(fd);
-  string result = imap_recv(sslConnection, 100);
+  SSL *sslConnection = connectSSL(fd);
+  string result = imapRecv(sslConnection, 100);
   cout<<"S: "<<result<<endl;
 
-  ShowImapCommands(sslConnection);
+  showImapCommands(sslConnection);
 
   SSL_free(sslConnection);
-  DestroySSL();
+  destroySSL();
 }

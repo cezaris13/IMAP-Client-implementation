@@ -51,7 +51,7 @@ int initializeClient(char host[], char port[]) {
   return socketId;
 }
 
-string imap_recv(SSL *sslConnection, size_t size) {
+string imapRecv(SSL *sslConnection, size_t size) {
   size_t cursor = 0;
   int rc;
 
@@ -66,34 +66,34 @@ string imap_recv(SSL *sslConnection, size_t size) {
   return result;
 }
 
-int check_ok(string str) {
+int checkOK(string str) {
   int len = str.length();
-  int is_ok = 0;
+  int isOk = 0;
   for (int i = 0; i < len; i++) {
     if (i + 4 > len)
       break;
     if (str[i] == 'O' && str[i + 1] == 'K') {
-      is_ok = 1;
+      isOk = 1;
       break;
     };
   };
-  return is_ok;
+  return isOk;
 }
 
-SSL *ConnectSSL(int socketId) {
+SSL *connectSSL(int socketId) {
   SSL_load_error_strings();
   SSL_library_init();
   OpenSSL_add_all_algorithms();
   SSL_CTX *sslContext = SSL_CTX_new(SSLv23_method());
-  if (sslContext == NULL) {
+  if (sslContext == NULL)
     printf("err\n");
-  }
+  
   SSL_CTX_set_options(sslContext, SSL_OP_SINGLE_DH_USE);
 
   SSL *sslConnection = SSL_new(sslContext);
-  if (sslConnection == NULL) {
+  if (sslConnection == NULL)
     printf("err\n");
-  }
+  
   SSL_set_fd(sslConnection, socketId);
 
   SSL_set_mode(sslConnection, SSL_MODE_AUTO_RETRY);
@@ -101,7 +101,7 @@ SSL *ConnectSSL(int socketId) {
   return sslConnection;
 }
 
-void DestroySSL() {
+void destroySSL() {
   ERR_free_strings();
   EVP_cleanup();
 }

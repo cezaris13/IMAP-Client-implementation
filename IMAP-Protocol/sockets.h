@@ -3,8 +3,8 @@
 #include "sockets.cpp"
 using namespace std;
 int initializeClient(char host[], char port[]);
-string imap_recv(SSL *sslConnection, size_t size);
-int check_ok(string str);
-SSL *ConnectSSL(int socketId);
-void DestroySSL();
+string imapRecv(SSL *sslConnection, size_t size);
+int checkOK(string str);
+SSL *connectSSL(int socketId);
+void destroySSL();
 #endif
