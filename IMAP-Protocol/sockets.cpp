@@ -2,8 +2,6 @@
 #include <string.h>
 #include <unistd.h>
 
-using namespace std;
-
 int initializeClient(char host[], char port[]) {
   int socketId;
   struct addrinfo *servInfo, *currInfo, hints;
@@ -42,12 +40,12 @@ int initializeClient(char host[], char port[]) {
   return socketId;
 }
 
-string imapRecv(SSL *sslConnection, size_t size) {
+std::string imapRecv(SSL *sslConnection, size_t size) {
   size_t cursor = 0;
   int rc;
 
   char buffer[size];
-  string result;
+  std::string result;
   while ((rc = SSL_read(sslConnection, buffer, size))>0) {
 
     buffer[rc] = '\0';
@@ -57,7 +55,7 @@ string imapRecv(SSL *sslConnection, size_t size) {
   return result;
 }
 
-int checkOK(string str) {
+int checkOK(std::string str) {
   int len = str.length();
   int isOk = 0;
   for (int i = 0; i < len; i++) {

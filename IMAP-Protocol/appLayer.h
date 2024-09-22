@@ -6,7 +6,7 @@ void loginUser(SSL *sslConnection, int *cursor);
 void loginUserHardcoded(SSL *sslConnection, int *cursor);
 void logoutUser(SSL *sslConnection, int *cursor);
 void selectMailboxByNameProvided(SSL *sslConnection, int *cursor,
-                                 string mailBoxName);
+                                 std::string mailBoxName);
 void selectMailboxByName(SSL *sslConnection, int *cursor);
 void getMailboxes(SSL *sslConnection, int *cursor);
 void createMailBox(SSL *sslConnection, int *cursor);
