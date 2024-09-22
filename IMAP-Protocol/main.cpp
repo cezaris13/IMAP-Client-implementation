@@ -1,5 +1,3 @@
-#include "appLayer.h"
-#include "sockets.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +5,8 @@
 #define MAX_EMAIL_ADDRESS_LENGTH 320
 #define MAX_MAILBOX_NAME_SIZE 20
 using namespace std;
+#include "appLayer.h"
+#include "sockets.h"
 
 void ShowImapCommands(SSL *sslConnection) {
   int cursor = 1;
