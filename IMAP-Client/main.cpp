@@ -92,9 +92,7 @@ int main() {
     return 0;
   }
 
-  auto imapEmail = env["IMAP_EMAIL"];
-  auto imapPort = env["IMAP_PORT"];
-  int fd = initializeClient(imapEmail.data(), imapPort.data());
+  int fd = initializeClient(env["IMAP_EMAIL"].data(), env["IMAP_PORT"].data());
   if (fd < 0) {
     fprintf(stdout, "fd = %d, open file failed\n", fd);
     return 0;
