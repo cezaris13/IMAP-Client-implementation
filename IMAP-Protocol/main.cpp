@@ -22,7 +22,11 @@ void showImapCommands(SSL *sslConnection) {
            "11. delete mailbox \n"
            "12. get mailbox email count \n"
            "13. logout \n"
-           "14. close system \n");
+           "14. close system \n"
+           "15. login user from env\n"
+           "16. noop\n"
+           "17. search\n");
+
     scanf("%d", &count);
     switch (count) {
       case 1:

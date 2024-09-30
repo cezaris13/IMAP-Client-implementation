@@ -1,4 +1,6 @@
 #include <print>
+#include <unordered_map>
+
 struct Data {
   int statusCode; // 1 for success 0 for failure
   std::string message;
@@ -81,4 +83,40 @@ Data sendAndReceiveImapMessage(std::string command, SSL *sslConnection,
   data.message = response;
 
   return data;
+}
+
+std::unordered_map<std::string, std::string> loadEnv(const std::string& filePath) {
+    std::unordered_map<std::string, std::string> envVariables;
+    std::ifstream envFile(filePath);
+    
+    if (!envFile.is_open()) {
+        std::cerr << "Error: Could not open the .env file." << std::endl;
+        return envVariables;
+    }
+
+    std::string line;
+    while (std::getline(envFile, line)) {
+        // Ignore comments and empty lines
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+
+        // Split the line at the '=' character
+        size_t delimiterPos = line.find('=');
+        if (delimiterPos != std::string::npos) {
+            std::string key = line.substr(0, delimiterPos);
+            std::string value = line.substr(delimiterPos + 1);
+
+            // Remove any surrounding whitespace
+            key.erase(key.find_last_not_of(" \n\r\t") + 1);
+            value.erase(0, value.find_first_not_of(" \n\r\t")); // remove leading whitespace
+            value.erase(value.find_last_not_of(" \n\r\t") + 1); // remove trailing whitespace
+
+            // Store the key-value pair in the map
+            envVariables[key] = value;
+        }
+    }
+
+    envFile.close();
+    return envVariables;
 }

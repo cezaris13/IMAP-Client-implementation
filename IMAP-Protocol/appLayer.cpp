@@ -28,7 +28,14 @@ void loginUser(SSL *sslConnection, int *cursor) {
 }
 
 void loginUserHardcoded(SSL *sslConnection, int *cursor) {
-  std::string message = std::format("A{} LOGIN \"{}\" \"{}\"\r\n", (*cursor)++, "kt.testimap2022@gmail.com", "Q!w2e3r4t5");
+  std::unordered_map env = loadEnv(".env");
+  
+  if (env.find("EMAIL") == env.end() || env.find("PASSWORD") == env.end()) {
+    std::print("Failed to load enviroment variables.");
+    return;
+  }
+
+  std::string message = std::format("A{} LOGIN \"{}\" \"{}\"\r\n", (*cursor)++, env["EMAIL"], env["PASSWORD"]);
 
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Login failed\n");
@@ -316,7 +323,7 @@ void getAllEmailsFromMailbox(SSL *sslConnection, int *cursor) {
     return;
   }
   selectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
-  std::string message = "A" + std::to_string((*cursor)++) + " UID search ALL\r\n";
+  std::string message = std::format("A{} UID search ALL\r\n", (*cursor)++);
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Fetch failed\n");
 }
