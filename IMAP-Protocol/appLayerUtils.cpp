@@ -81,7 +81,8 @@ Data sendAndReceiveImapMessage(std::string command, SSL *sslConnection,
     std::print("S: {}\n", response);
   data.statusCode = isOk;
   data.message = response;
-
+  if (data.statusCode == 0) 
+    std::print("{}", data.message);
   return data;
 }
 

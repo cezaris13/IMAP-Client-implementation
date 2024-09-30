@@ -22,7 +22,11 @@
 - Get all emails from mailbox
 
 ## Running the program
-
+```bash
+make init
+vim .env
+#enter your email credentials.
+```
 ```bash
 make build
 ```

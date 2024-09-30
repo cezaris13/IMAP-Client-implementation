@@ -85,7 +85,16 @@ void showImapCommands(SSL *sslConnection) {
 }
 
 int main() {
-  int fd = initializeClient("imap.gmail.com", "993");
+  std::unordered_map env = loadEnv(".env");
+
+  if (env.find("IMAP_EMAIL") == env.end() || env.find("IMAP_PORT") == env.end()) {
+    std::print("env file does not contain imap email or port.");
+    return 0;
+  }
+
+  auto imapEmail = env["IMAP_EMAIL"];
+  auto imapPort = env["IMAP_PORT"];
+  int fd = initializeClient(imapEmail.data(), imapPort.data());
   if (fd < 0) {
     fprintf(stdout, "fd = %d, open file failed\n", fd);
     return 0;

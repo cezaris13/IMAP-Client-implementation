@@ -22,7 +22,7 @@ void loginUser(SSL *sslConnection, int *cursor) {
   std::cin >> userName;
   printf("Enter your password: ");
   std::cin >> password;
-  std::string message = std::format("A{} LOGIN \" {} \" \"{} \"\r\n", (*cursor)++,userName,password);
+  std::string message = std::format("A{} LOGIN \"{}\" \"{}\"\r\n", (*cursor)++,userName,password);
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Login failed\n");
 }
@@ -281,35 +281,36 @@ void getMailByUID(SSL *sslConnection, int *cursor) {
   selectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
   std::string message = std::format("A{} UID FETCH {} (BODY.PEEK[1])\r\n", (*cursor)++, uid);
 
-  Data res0 = sendAndReceiveImapMessage(message, sslConnection, 1);
-  size_t found = res0.message.find("text/plain; charset=\"UTF-8\"");
-  std::string t = res0.message.substr(found + strlen("text/plain; charset=\"UTF-8\""));
+  Data response = sendAndReceiveImapMessage(message, sslConnection, 1);
+  size_t found = response.message.find("text/plain; charset=\"UTF-8\"");
+  std::string t = response.message.substr(found + strlen("text/plain; charset=\"UTF-8\""));
+
   found = t.find("--");
   std::string text = t.substr(0, found);
   std::print("text: {}\n",text);
-  message = std::format("A{} UID FETCH {} (BODY.PEEK[2])\r\n", (*cursor)++, uid);
 
-  Data ret = sendAndReceiveImapMessage(message, sslConnection, 1);
-  std::string response = ret.message;
-  std::string mess = response.substr(response.find("}") + 3, response.find(")") - response.find("}") - 3);
+  message = std::format("A{} UID FETCH {} (BODY.PEEK[2])\r\n", (*cursor)++, uid);
+  response = sendAndReceiveImapMessage(message, sslConnection, 1);
+  message = response.message;
+  std::string mess = message.substr(message.find("}") + 3, message.find(")") - message.find("}") - 3);
   mess.erase(remove(mess.begin(), mess.end(), '\r'));
   mess.erase(remove(mess.begin(), mess.end(), '\n'));
   mess[mess.size() - 1] = 0;
-  ret.message = base64Decode(mess);
+  response.message = base64Decode(mess);
   message = std::format("A{} UID FETCH {} (BODY.PEEK[TEXT])\r\n", (*cursor)++, uid);
 
   Data result = sendAndReceiveImapMessage(message, sslConnection, 1);
   found = result.message.find("filename");
   std::string filename = result.message.substr(found);
   filename = filename.substr(filename.find("\"") + 1, filename.find("\"", filename.find("\"") + 1) - filename.find("\"") - 1);
-  if (!ret.statusCode || !result.statusCode) {
+  if (!response.statusCode || !result.statusCode) {
     printf("Fetch failed\n");
     return;
   }
 
   std::ofstream file;
   file.open(filename);
-  file << ret.message;
+  file << response.message;
   file.close();
   showFileContents(filename);
 }
