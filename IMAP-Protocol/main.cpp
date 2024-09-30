@@ -1,4 +1,5 @@
 #include <iostream>
+#include <print>
 #include "appLayer.h"
 #include "sockets.h"
 
@@ -89,7 +90,7 @@ int main() {
   }
   SSL *sslConnection = connectSSL(fd);
   std::string result = imapRecv(sslConnection, 100);
-  std::cout<<"S: "<<result<<std::endl;
+  std::print("S: {}\n", result);
 
   showImapCommands(sslConnection);
 

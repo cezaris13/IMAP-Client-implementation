@@ -1,3 +1,4 @@
+#include <print>
 struct Data {
   int statusCode; // 1 for success 0 for failure
   std::string message;
@@ -14,7 +15,7 @@ void showFileContents(std::string fileName) {
   file.open(fileName);
   std::string line;
   while (getline(file, line))
-    std::cout << line << std::endl;
+    std::print("{}\n",line);
   
   file.close();
 }
@@ -70,12 +71,12 @@ Data sendAndReceiveImapMessage(std::string command, SSL *sslConnection,
                                 int silent) {
   Data data;
   if (!silent)
-    std::cout << "C: " << command << std::endl;
+    std::print("C: {}\n", command);
   SSL_write(sslConnection, command.c_str(), command.length());
   std::string response = imapRecv(sslConnection, 100);
   int isOk = checkOK(response);
   if (!silent)
-    std::cout << "S: " << response << std::endl;
+    std::print("S: {}\n", response);
   data.statusCode = isOk;
   data.message = response;
 

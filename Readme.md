@@ -1,4 +1,4 @@
-# IMAP protocol implementation for computer network course in Vilnius university (2022, spring semester).
+# IMAP client implementation for computer network course in Vilnius university (2022, spring semester).
 
 ## Implemented IMAP commands:
 - Send and receive imap message
@@ -17,6 +17,7 @@
 - Delete email from mailbox
 - Move email from one mailbox to another
 - Get mail by uid
+    - and receive attachement if it is in the email(Displays txt file in terminal, other types just saves in the project folder).
 - Search
 - Get all emails from mailbox
 

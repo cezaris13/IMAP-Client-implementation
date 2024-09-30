@@ -3,13 +3,15 @@
 #include <algorithm>
 #include <sstream>
 #include <fstream>
+#include <print>
+#include <format>
 #include "sockets.h"
 #include "appLayerUtils.cpp"
 #define MESSAGE_LENGTH 320
 #define MAX_MAILBOX_NAME_SIZE 20
 
 void checkConnectionStatus(SSL *sslConnection, int *cursor) {
-  std::string message = "A" + std::to_string((*cursor)++) + " CAPABILITY\r\n";
+  std::string message = std::format("A{} CAPABILITY\r\n",(*cursor)++);
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Connection lost\n");
 }
@@ -20,13 +22,14 @@ void loginUser(SSL *sslConnection, int *cursor) {
   std::cin >> userName;
   printf("Enter your password: ");
   std::cin >> password;
-  std::string message = "A" + std::to_string((*cursor)++) + " LOGIN \"" + userName + "\" \"" + password + "\"\r\n";
+  std::string message = std::format("A{} LOGIN \" {} \" \"{} \"\r\n", (*cursor)++,userName,password);
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Login failed\n");
 }
 
 void loginUserHardcoded(SSL *sslConnection, int *cursor) {
-  std::string message = "A" + std::to_string((*cursor)++) + " LOGIN \"" + "kt.testimap2022@gmail.com" + "\" \"" + "Q!w2e3r4t5" + "\"\r\n";
+  std::string message = std::format("A{} LOGIN \"{}\" \"{}\"\r\n", (*cursor)++, "kt.testimap2022@gmail.com", "Q!w2e3r4t5");
+
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Login failed\n");
 }
@@ -39,7 +42,8 @@ void logoutUser(SSL *sslConnection, int *cursor) {
 
 void selectMailboxByNameProvided(SSL *sslConnection, int *cursor,
                                  std::string mailBoxName) {
-  std::string message = "A" + std::to_string((*cursor)++) + " SELECT \"" + mailBoxName + "\"\r\n";
+  std::string message = std::format("A{} SELECT \"{}\"\r\n", (*cursor)++, mailBoxName);
+
   if (!sendAndReceiveImapMessage(message, sslConnection, 1).statusCode)
     printf("Select failed\n");
 }
@@ -50,13 +54,15 @@ void selectMailboxByName(SSL *sslConnection, int *cursor) {
   std::cin >> mailBoxName;
   if (mailBoxName.length() > MAX_MAILBOX_NAME_SIZE)
     printf("Mailbox name is too long\n");
-  std::string message = "A" + std::to_string((*cursor)++) + " SELECT \"" + mailBoxName + "\"\r\n";
+  std::string message = std::format("A{} SELECT \"{}\"\r\n", (*cursor)++, mailBoxName);
+
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Select failed\n");
 }
 
 void getMailboxes(SSL *sslConnection, int *cursor) {
-  std::string message = "A" + std::to_string((*cursor)++) + " LIST \"\" \"*\"\r\n";
+  std::string message = std::format("A{} LIST \"\" \"*\"\r\n", (*cursor)++);
+
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("List failed\n");
 }
@@ -69,7 +75,8 @@ void createMailBox(SSL *sslConnection, int *cursor) {
     printf("Mailbox name is too long\n");
     return;
   }
-  std::string message = "A" + std::to_string((*cursor)++) + " CREATE \"" + mailBoxName + "\"\r\n";
+  std::string message = std::format("A{} CREATE \"{}\"\r\n", (*cursor)++, mailBoxName);
+
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Create failed\n");
 }
@@ -82,7 +89,7 @@ void deleteMailbox(SSL *sslConnection, int *cursor) {
     printf("Mailbox name is too long\n");
     return;
   }
-  std::string message = "A" + std::to_string((*cursor)++) + " DELETE \"" + mailBoxName + "\"\r\n";
+  std::string message = std::format("A{} DELETE \"{}\"\r\n", (*cursor)++, mailBoxName);
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Delete failed\n");
 }
@@ -102,13 +109,14 @@ void renameMailbox(SSL *sslConnection, int *cursor) {
     printf("Mailbox name is too long\n");
     return;
   }
-  std::string message = "A" + std::to_string((*cursor)++) + " RENAME \"" + mailBoxName + "\" \"" + newMailBoxName + "\"\r\n";
+  std::string message = std::format("A{} RENAME \"{}\" \"{}\"\r\n", (*cursor)++, mailBoxName, newMailBoxName);
+
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Rename failed\n");
 }
 
 void noop(SSL *sslConnection, int *cursor) {
-  std::string message = "A" + std::to_string((*cursor)++) + " NOOP\r\n";
+  std::string message = std::format("A{} NOOP\r\n", (*cursor)++);
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Noop failed\n");
 }
@@ -121,7 +129,8 @@ void getEmailCountForMailbox(SSL *sslConnection, int *cursor) {
     printf("Mailbox name is too long\n");
     return;
   }
-  std::string message = "A" + std::to_string((*cursor)++) + " EXAMINE \"" + mailBoxName + "\"\r\n";
+  std::string message = std::format("A{} EXAMINE \"{}\"\r\n", (*cursor)++, mailBoxName);
+
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Status failed\n");
 }
@@ -139,12 +148,12 @@ void deleteEmailFromMailbox(SSL *sslConnection, int *cursor) {
   printf("Enter uid: ");
   std::cin >> uid;
 
-  std::string message = "A" + std::to_string((*cursor)++) + " UID STORE " + uid + " +FLAGS (\\Deleted)\r\n";
+  std::string message = std::format("A{} UID STORE {} +FLAGS (\\Deleted)\r\n", (*cursor)++, uid);
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode ) {
     printf("Store failed\n");
     return;
   }
-  message = "A" + std::to_string((*cursor)++) + " UID EXPUNGE " + uid + "\r\n";
+  message = std::format("A{} UID EXPUNGE {}\r\n", (*cursor)++, uid);
   if (!sendAndReceiveImapMessage(message, sslConnection, 0).statusCode )
     printf("Expunge failed\n");
 }
@@ -169,17 +178,18 @@ void moveEmailFromOneMailboxToAnother(SSL *sslConnection, int *cursor) {
   printf("Enter uid of email: ");
   std::cin >> uid;
   selectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
-  std::string message = "A" + std::to_string((*cursor)++) + " UID COPY " + uid + " " + newMailBoxName + "\r\n";
+  std::string message = std::format("A{} UID COPY {} {}\r\n", (*cursor)++, uid, newMailBoxName);
   if (!sendAndReceiveImapMessage(message, sslConnection, 1).statusCode) {
     printf("Copy failed\n");
     return;
   }
-  message = "A" + std::to_string((*cursor)++) + " UID STORE " + uid + " +FLAGS (\\Deleted)\r\n";
+  message = std::format("A{} UID STORE {} +FLAGS (\\Deleted)\r\n", (*cursor)++, uid);
+
   if (!sendAndReceiveImapMessage(message, sslConnection, 1).statusCode) {
     printf("Store failed\n");
     return;
   }
-  message = "A" + std::to_string((*cursor)++) + " UID EXPUNGE " + uid + "\r\n";
+  message = std::format("A{} UID EXPUNGE {}\r\n", (*cursor)++, uid);
   if (!sendAndReceiveImapMessage(message, sslConnection, 1).statusCode)
     printf("Expunge failed\n");
 }
@@ -222,7 +232,7 @@ void search(SSL *sslConnection, int *cursor) {
   since[since.size()] = 0;
   before[before.size()] = 0;
 
-  std::string message = "A" + std::to_string((*cursor)++) + " search";
+  std::string message = std::format("A{} search", (*cursor)++);
   if (from.length() != 0)
     message += " FROM \"" + from + "\"";
   
@@ -262,14 +272,16 @@ void getMailByUID(SSL *sslConnection, int *cursor) {
   printf("Enter UID: ");
   std::cin >> uid;
   selectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
-  std::string message = "A" + std::to_string((*cursor)++) + " UID FETCH " + uid + " (BODY.PEEK[1])\r\n";
+  std::string message = std::format("A{} UID FETCH {} (BODY.PEEK[1])\r\n", (*cursor)++, uid);
+
   Data res0 = sendAndReceiveImapMessage(message, sslConnection, 1);
   size_t found = res0.message.find("text/plain; charset=\"UTF-8\"");
   std::string t = res0.message.substr(found + strlen("text/plain; charset=\"UTF-8\""));
   found = t.find("--");
   std::string text = t.substr(0, found);
-  std::cout << "text: " << text << std::endl;
-  message = "A" + std::to_string((*cursor)++) + " UID FETCH " + uid + " (BODY.PEEK[2])\r\n";
+  std::print("text: {}\n",text);
+  message = std::format("A{} UID FETCH {} (BODY.PEEK[2])\r\n", (*cursor)++, uid);
+
   Data ret = sendAndReceiveImapMessage(message, sslConnection, 1);
   std::string response = ret.message;
   std::string mess = response.substr(response.find("}") + 3, response.find(")") - response.find("}") - 3);
@@ -277,7 +289,8 @@ void getMailByUID(SSL *sslConnection, int *cursor) {
   mess.erase(remove(mess.begin(), mess.end(), '\n'));
   mess[mess.size() - 1] = 0;
   ret.message = base64Decode(mess);
-  message = "A" + std::to_string((*cursor)++) + " UID FETCH " + uid + " (BODY.PEEK[TEXT])\r\n";
+  message = std::format("A{} UID FETCH {} (BODY.PEEK[TEXT])\r\n", (*cursor)++, uid);
+
   Data result = sendAndReceiveImapMessage(message, sslConnection, 1);
   found = result.message.find("filename");
   std::string filename = result.message.substr(found);
