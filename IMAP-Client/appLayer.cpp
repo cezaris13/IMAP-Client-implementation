@@ -267,52 +267,104 @@ void search(SSL *sslConnection, int *cursor) {
     printf("search failed\n");
 }
 
+std::string getMailboxName() {
+    std::string mailBoxName;
+    std::cout << "Enter mailbox name: ";
+    std::cin >> mailBoxName;
+    if (mailBoxName.length() > MAX_MAILBOX_NAME_SIZE) {
+        std::cerr << "Mailbox name is too long" << std::endl;
+        return "";
+    }
+    return mailBoxName;
+}
+
+// Helper function to get UID from the user
+std::string getUID() {
+    std::string uid;
+    std::cout << "Enter UID: ";
+    std::cin >> uid;
+    return uid;
+}
+
+// Helper function to fetch a specific part of an email by UID
+std::string fetchEmailPart(SSL *sslConnection, int *cursor, const std::string &uid, std::string part) {
+    std::string message = std::format("A{} UID FETCH {} (BODY.PEEK[{}])\r\n", (*cursor)++, uid, part);
+    Data response = sendAndReceiveImapMessage(message, sslConnection, 1);
+    return response.message;
+}
+
+// Helper function to extract plain text from the email body
+std::string extractPlainText(const std::string &message) {
+    size_t found = message.find("text/plain; charset=\"UTF-8\"");
+    if (found == std::string::npos) return "";
+
+    std::string t = message.substr(found + strlen("text/plain; charset=\"UTF-8\""));
+    found = t.find("--");
+    if (found != std::string::npos)
+        return t.substr(0, found);
+    return "";
+}
+
+// Helper function to decode base64 encoded message body
+std::string decodeBase64Message(const std::string &message) {
+    std::string base64Part = message.substr(message.find("}") + 3, message.find(")") - message.find("}") - 3);
+    base64Part.erase(std::remove(base64Part.begin(), base64Part.end(), '\r'), base64Part.end());
+    base64Part.erase(std::remove(base64Part.begin(), base64Part.end(), '\n'), base64Part.end());
+    if (!base64Part.empty()) {
+        base64Part[base64Part.size() - 1] = 0;
+    }
+    return base64Decode(base64Part);
+}
+
+// Helper function to extract the filename from an email body
+std::string extractFilename(const std::string &message) {
+    size_t found = message.find("filename");
+    if (found == std::string::npos) return "";
+
+    std::string filename = message.substr(found);
+    size_t firstQuote = filename.find("\"");
+    size_t secondQuote = filename.find("\"", firstQuote + 1);
+    if (firstQuote != std::string::npos && secondQuote != std::string::npos) {
+        return filename.substr(firstQuote + 1, secondQuote - firstQuote - 1);
+    }
+    return "";
+}
+
+// Main function to fetch an email by UID and write its content to a file
 void getMailByUID(SSL *sslConnection, int *cursor) {
-  std::string mailBoxName;
-  std::string uid;
-  printf("Enter mailbox name: ");
-  std::cin >> mailBoxName;
-  if (mailBoxName.length() > MAX_MAILBOX_NAME_SIZE) {
-    printf("Mailbox name is too long\n");
-    return;
-  }
-  printf("Enter UID: ");
-  std::cin >> uid;
-  selectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
-  std::string message = std::format("A{} UID FETCH {} (BODY.PEEK[1])\r\n", (*cursor)++, uid);
+    std::string mailBoxName = getMailboxName();
+    if (mailBoxName.empty()) return;
 
-  Data response = sendAndReceiveImapMessage(message, sslConnection, 1);
-  size_t found = response.message.find("text/plain; charset=\"UTF-8\"");
-  std::string t = response.message.substr(found + strlen("text/plain; charset=\"UTF-8\""));
+    std::string uid = getUID();
+    selectMailboxByNameProvided(sslConnection, cursor, mailBoxName);
 
-  found = t.find("--");
-  std::string text = t.substr(0, found);
-  std::print("text: {}\n",text);
+    // Fetch plain text part
+    std::string message = fetchEmailPart(sslConnection, cursor, uid, "1");
+    std::string text = extractPlainText(message);
+    std::cout << "Text: " << text << std::endl;
 
-  message = std::format("A{} UID FETCH {} (BODY.PEEK[2])\r\n", (*cursor)++, uid);
-  response = sendAndReceiveImapMessage(message, sslConnection, 1);
-  message = response.message;
-  std::string mess = message.substr(message.find("}") + 3, message.find(")") - message.find("}") - 3);
-  mess.erase(remove(mess.begin(), mess.end(), '\r'));
-  mess.erase(remove(mess.begin(), mess.end(), '\n'));
-  mess[mess.size() - 1] = 0;
-  response.message = base64Decode(mess);
-  message = std::format("A{} UID FETCH {} (BODY.PEEK[TEXT])\r\n", (*cursor)++, uid);
+    // Fetch and decode message part 2 (base64 encoded)
+    std::string encodedMessage = fetchEmailPart(sslConnection, cursor, uid, "2");
+    std::string decodedMessage = decodeBase64Message(encodedMessage);
 
-  Data result = sendAndReceiveImapMessage(message, sslConnection, 1);
-  found = result.message.find("filename");
-  std::string filename = result.message.substr(found);
-  filename = filename.substr(filename.find("\"") + 1, filename.find("\"", filename.find("\"") + 1) - filename.find("\"") - 1);
-  if (!response.statusCode || !result.statusCode) {
-    printf("Fetch failed\n");
-    return;
-  }
+    // Fetch attachment part
+    std::string resultMessage = fetchEmailPart(sslConnection, cursor, uid, "TEXT");
+    std::string filename = extractFilename(resultMessage);
 
-  std::ofstream file;
-  file.open(filename);
-  file << response.message;
-  file.close();
-  showFileContents(filename);
+    if (filename.empty()) {
+        std::cerr << "Fetch failed: No filename found" << std::endl;
+        return;
+    }
+
+    // Write content to file
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        file << decodedMessage;
+        file.close();
+        showFileContents(filename);
+    } else {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+    }
 }
 
 void getAllEmailsFromMailbox(SSL *sslConnection, int *cursor) {

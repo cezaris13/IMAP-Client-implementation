@@ -17,60 +17,81 @@ void showFileContents(std::string fileName) {
   file.open(fileName);
   std::string line;
   while (getline(file, line))
-    std::print("{}\n",line);
-  
+    std::print("{}\n", line);
+
   file.close();
+}
+
+void decodeBase64Chunk(const unsigned char charArray4[4],
+                       unsigned char charArray3[3]) {
+  // 1st byte: take all 6 bits from the first character, and 2 bits from the
+  // second character
+  charArray3[0] = (charArray4[0] << 2) + ((charArray4[1] & 0x30) >> 4);
+
+  // 2nd byte: take remaining 4 bits from the second character and 4 bits from
+  // the third character
+  charArray3[1] = ((charArray4[1] & 0xf) << 4) + ((charArray4[2] & 0x3c) >> 2);
+
+  // 3rd byte: take the remaining 2 bits from the third character and all 6 bits
+  // from the fourth character
+  charArray3[2] = ((charArray4[2] & 0x3) << 6) + charArray4[3];
 }
 
 std::string base64Decode(std::string const &encodedString) {
   const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                             "abcdefghijklmnopqrstuvwxyz"
-                             "0123456789+/";
-  int encodedStringLength = encodedString.size();
-  int i = 0;
-  int j = 0;
-  int in_ = 0;
-  unsigned char char_array_4[4], char_array_3[3];
-  std::string ret;
+                                  "abcdefghijklmnopqrstuvwxyz"
+                                  "0123456789+/";
+  int encodedLength = encodedString.size();
+  int base64Index = 0;
+  unsigned char charArray4[4], charArray3[3];
+  std::string decodedString;
+  int chunkSize = 0;
 
-  while (encodedStringLength-- && (encodedString[in_] != '=') && isBase64(encodedString[in_])) {
-    char_array_4[i++] = encodedString[in_];
-    in_++;
-    if (i == 4) {
-      for (i = 0; i < 4; i++)
-        char_array_4[i] = base64Chars.find(char_array_4[i]);
+  while (encodedLength-- && (encodedString[base64Index] != '=') &&
+         isBase64(encodedString[base64Index])) {
+    charArray4[chunkSize++] = encodedString[base64Index++];
 
-      char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-      char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-      char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+    // When we have 4 valid base64 characters, convert them to 3 decoded bytes
+    if (chunkSize == 4) {
+      for (int i = 0; i < 4; i++) {
+        charArray4[i] = base64Chars.find(charArray4[i]);
+      }
+      decodeBase64Chunk(charArray4, charArray3);
 
-      for (i = 0; (i < 3); i++)
-        ret += char_array_3[i];
-      i = 0;
+      // Append the decoded characters to the result
+      for (int i = 0; i < 3; i++) {
+        decodedString += charArray3[i];
+      }
+      chunkSize = 0; // Reset chunk size
     }
   }
 
-  if (i) {
-    for (j = i; j < 4; j++)
-      char_array_4[j] = 0;
+  // Process any remaining characters (padding or incomplete chunks)
+  if (chunkSize > 0) {
+    // Fill remaining positions in the 4-character array with zero
+    for (int i = chunkSize; i < 4; i++) {
+      charArray4[i] = 0;
+    }
 
-    for (j = 0; j < 4; j++)
-      char_array_4[j] = base64Chars.find(char_array_4[j]);
+    // Convert base64 characters to indexes
+    for (int i = 0; i < 4; i++) {
+      charArray4[i] = base64Chars.find(charArray4[i]);
+    }
 
-    char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-    char_array_3[1] =
-        ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-    char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+    // Decode the remaining characters
+    decodeBase64Chunk(charArray4, charArray3);
 
-    for (j = 0; (j < i - 1); j++)
-      ret += char_array_3[j];
+    // Append the remaining decoded bytes
+    for (int i = 0; i < chunkSize - 1; i++) {
+      decodedString += charArray3[i];
+    }
   }
 
-  return ret;
+  return decodedString;
 }
 
 Data sendAndReceiveImapMessage(std::string command, SSL *sslConnection,
-                                int silent) {
+                               int silent) {
   Data data;
   if (!silent)
     std::print("C: {}\n", command);
@@ -81,43 +102,46 @@ Data sendAndReceiveImapMessage(std::string command, SSL *sslConnection,
     std::print("S: {}\n", response);
   data.statusCode = isOk;
   data.message = response;
-  if (data.statusCode == 0) 
+  if (data.statusCode == 0)
     std::print("{}", data.message);
   return data;
 }
 
-std::unordered_map<std::string, std::string> loadEnv(const std::string& filePath) {
-    std::unordered_map<std::string, std::string> envVariables;
-    std::ifstream envFile(filePath);
-    
-    if (!envFile.is_open()) {
-        std::cerr << "Error: Could not open the .env file." << std::endl;
-        return envVariables;
-    }
+std::unordered_map<std::string, std::string>
+loadEnv(const std::string &filePath) {
+  std::unordered_map<std::string, std::string> envVariables;
+  std::ifstream envFile(filePath);
 
-    std::string line;
-    while (std::getline(envFile, line)) {
-        // Ignore comments and empty lines
-        if (line.empty() || line[0] == '#') {
-            continue;
-        }
-
-        // Split the line at the '=' character
-        size_t delimiterPos = line.find('=');
-        if (delimiterPos != std::string::npos) {
-            std::string key = line.substr(0, delimiterPos);
-            std::string value = line.substr(delimiterPos + 1);
-
-            // Remove any surrounding whitespace
-            key.erase(key.find_last_not_of(" \n\r\t") + 1);
-            value.erase(0, value.find_first_not_of(" \n\r\t")); // remove leading whitespace
-            value.erase(value.find_last_not_of(" \n\r\t") + 1); // remove trailing whitespace
-
-            // Store the key-value pair in the map
-            envVariables[key] = value;
-        }
-    }
-
-    envFile.close();
+  if (!envFile.is_open()) {
+    std::cerr << "Error: Could not open the .env file." << std::endl;
     return envVariables;
+  }
+
+  std::string line;
+  while (std::getline(envFile, line)) {
+    // Ignore comments and empty lines
+    if (line.empty() || line[0] == '#') {
+      continue;
+    }
+
+    // Split the line at the '=' character
+    size_t delimiterPos = line.find('=');
+    if (delimiterPos != std::string::npos) {
+      std::string key = line.substr(0, delimiterPos);
+      std::string value = line.substr(delimiterPos + 1);
+
+      // Remove any surrounding whitespace
+      key.erase(key.find_last_not_of(" \n\r\t") + 1);
+      value.erase(
+          0, value.find_first_not_of(" \n\r\t")); // remove leading whitespace
+      value.erase(value.find_last_not_of(" \n\r\t") +
+                  1); // remove trailing whitespace
+
+      // Store the key-value pair in the map
+      envVariables[key] = value;
+    }
+  }
+
+  envFile.close();
+  return envVariables;
 }

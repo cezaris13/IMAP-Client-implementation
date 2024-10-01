@@ -33,5 +33,9 @@ make build
 
 ## Resources
 
-For the implementation of IMAP I used the following sources:
+For the implementation of IMAP client I used the following sources:
 - https://datatracker.ietf.org/doc/html/rfc3501
+
+---
+## 2024 update
+Since google does not allow anymore the basic authentication https://workspaceupdates.googleblog.com/2023/09/winding-down-google-sync-and-less-secure-apps-support.html, oauth method needs to be implemented.
